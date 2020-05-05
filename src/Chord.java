@@ -66,7 +66,7 @@ public class Chord {
 		}
 		//updating_fingers.set(true);
 		//System.out.println("Will find fingers");
-		//this.updateFingerTable();
+		this.updateFingerTable();
 		/*while(updating_fingers.get() == true) {
 		}*/
 		//System.out.println("Will update others fingers");
@@ -99,8 +99,10 @@ public class Chord {
 	 * @param type: -1: Node joining  >=0: Updating fingerTable of index type
 	 */
 	public void find_successor(int key, String ip, int port, int type) { 
+		
+		//se nao existir sucessor, significa que é o unico na rede
 		if(this.successor == null) {
-			if(type == -1) {
+			if(type == -1) { // se for um lookup do successor
 				InetSocketAddress new_peer = new InetSocketAddress(ip,port);
 				this.setPredeccessor(new_peer);
 				Message m = new Message("SETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
@@ -111,43 +113,71 @@ public class Chord {
 	    		m.sendMessage(ip, port);
 	    		this.populateFingerTable(new_peer);
 			}
-		}else {
-			if(this.between(this.key, this.hash(successor), key)) {
-				if(type == -1) {
-					Message m = new Message("SETPREDECCESSOR " + key + " " + ip + " " +  port);
-		    		m.sendMessage(this.successor.getHostName(), this.successor.getPort());
-					
-		    		m = new Message("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
-		    		m.sendMessage(ip, port);
-					
-					this.setSuccessor(new InetSocketAddress(ip,port));
-					m = new Message("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-		    		m.sendMessage(ip, port);
-				}else {
-					Message m = new Message("SETFINGER " + this.hash(this.successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort() + " " + type);
-		    		m.sendMessage(ip, port);
-				}
+			return;
+		}
+		//se a chave que se procura estiver entre mim e o meu sucessor, logo deu hit!
+		if(this.between(this.key, this.hash(successor), key)) {
+			if(type == -1) { // se for um lookup do successor
+				Message m = new Message("SETPREDECCESSOR " + key + " " + ip + " " +  port);
+	    		m.sendMessage(this.successor.getHostName(), this.successor.getPort());
+				
+	    		m = new Message("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
+	    		m.sendMessage(ip, port);
+				
+	    		InetSocketAddress newFinger = new InetSocketAddress(ip,port);
+				this.setSuccessor(newFinger);
+				m = new Message("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+	    		m.sendMessage(ip, port);
 	    		
-			}else {
-				//InetSocketAddress closest = this.successor;
-				InetSocketAddress closest = closest_preceding_node(key);
-				System.out.println("Closest to " + key + " is:  " + closest);
-				if(type == -1) {
-					String data = "GETSUCCESSOR " + key + " " + ip + " " +  port;
-					Message m = new Message(data);
-					m.sendMessage(closest.getHostName(), closest.getPort());
-				}else {
-					Message m = new Message("FINDFINGER " + key + " " + ip + " " +  port + " " + type);
-		    		m.sendMessage(closest.getHostName(), closest.getPort());
-				}
+	    		//novo sucessor encontrado, por isso mudar os fingers
+	    		this.foundNewFinger(newFinger);
+	    		this.sendNotifyNewFinger(this.key,ip,port);
+	    		
+			}else { // se for uma procura de um finger
+				Message m = new Message("SETFINGER " + this.hash(this.successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort() + " " + type);
+	    		m.sendMessage(ip, port);
+			}
+    		return;
+		}else { //se a chave estiver para la do sucessor
+			InetSocketAddress closest = closest_preceding_node(key);
+			System.out.println("Closest to " + key + " is:  " + closest);
+			if(type == -1) { // se for um lookup do successor
+				String data = "GETSUCCESSOR " + key + " " + ip + " " +  port;
+				Message m = new Message(data);
+				m.sendMessage(closest.getHostName(), closest.getPort());
+			}else { // se for uma prucura de finger
+				Message m = new Message("FINDFINGER " + key + " " + ip + " " +  port + " " + type);
+	    		m.sendMessage(closest.getHostName(), closest.getPort());
+			}
+
+		}
+	}
+	
+	public void foundNewFinger(InetSocketAddress finger) {
+		int key = this.hash(finger);
+		for(int i = 0; i < M; i++) {
+			int prev_key = this.hash(this.fingerTable.get(i));
+			if(between(this.key,prev_key,key)) {
+				this.fingerTable.replace(i, finger);
 			}
 		}
+	}
+	
+	public void sendNotifyNewFinger(int originKey , String ip, int port) {
+		int pred_key = this.hash(this.predeccessor);
+		
+		System.out.println(this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) + "  " + originKey + " " + pred_key);
+		if(! between( this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) , originKey , pred_key ))
+			return;
+		Message m = new Message("NEWFINGER " + originKey + " " + ip + " " +  port + " ");
+		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
+		System.out.println("Sent new finger to predecessor");
 	}
 	
 	
 	public void updateFingerTable() {
 		for(int i = 0; i < M; i++) {
-			int index = Math.abs((int) ((this.key + Math.pow(2, i)) %  Math.pow(2, M)));
+			int index = this.positiveModule((int) (this.key - Math.pow(2, i)), (int)  Math.pow(2, M));
 			this.find_successor(index, this.selfAddress.getHostName(), this.selfAddress.getPort(), i);
 		}
 	}
@@ -158,9 +188,8 @@ public class Chord {
     		//m.sendMessage(closest.getHostName(), closest.getPort());
 		}*/
 		
-		int destiny = Math.abs((int) ((this.hash(predeccessor) - Math.pow(2, M)) % Math.pow(2, M)));
-		int max = Math.abs((int) ((this.hash(selfAddress) - Math.pow(2, 0)) % Math.pow(2, M)));
-		
+		int destiny = this.positiveModule((int) (this.hash(predeccessor) - Math.pow(2, M)), (int)  Math.pow(2, M));
+		int max = this.positiveModule((int) (this.hash(selfAddress) - Math.pow(2, 0)), (int)  Math.pow(2, M));
 		InetSocketAddress closest = closest_preceding_node(destiny);
 		
 		Message m = new Message("UPDATEFINGERTABLE " + destiny + " " + max + " " + 1);
@@ -245,5 +274,10 @@ public class Chord {
 		return false;
 	}
 	
+	private int positiveModule(int a, int m) {
+		while(a < 0)
+			a+=m;
+		return a % m;
+	}
 	
 }

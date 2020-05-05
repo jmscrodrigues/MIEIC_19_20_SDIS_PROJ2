@@ -74,6 +74,13 @@ public class ChordMessageHandler implements Runnable {
 		    	int ttl = Integer.parseInt(parts[3]);
 		    	this.chord.checkUpdateFingerTable(destiny, max, ttl);
 		    }
+		    else if(op.equals("NEWFINGER")) {
+		    	int originKey = Integer.parseInt(parts[1]);
+		    	String ip = parts[2];
+		    	int port = Integer.parseInt(parts[3]);
+		    	this.chord.foundNewFinger(new InetSocketAddress(ip,port));
+		    	this.chord.sendNotifyNewFinger(originKey, ip, port);
+		    }
 		    
 		    
 		    
