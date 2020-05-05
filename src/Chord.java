@@ -85,7 +85,7 @@ public class Chord {
 		m = new Message("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
 		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
 		
-		
+		this.sendNotifyDeleteFinger(this.hash(predeccessor), this.key , this.successor.getHostName(), this.successor.getPort());
 		
 		System.out.println("Node left ring");
 	}
@@ -163,6 +163,13 @@ public class Chord {
 		}
 	}
 	
+	public void deleteFinger(int oldKey, InetSocketAddress finger) {
+		for(int i = 0; i < M; i++) {
+			if(hash(this.fingerTable.get(i)) == oldKey)
+				this.fingerTable.replace(i, finger);
+		}
+	}
+	
 	public void sendNotifyNewFinger(int originKey , String ip, int port) {
 		int pred_key = this.hash(this.predeccessor);
 		
@@ -172,6 +179,17 @@ public class Chord {
 		Message m = new Message("NEWFINGER " + originKey + " " + ip + " " +  port + " ");
 		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
 		System.out.println("Sent new finger to predecessor");
+	}
+	
+	public void sendNotifyDeleteFinger(int originKey , int oldKey, String ip, int port) {
+		int pred_key = this.hash(this.predeccessor);
+		
+		//System.out.println(this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) + "  " + originKey + " " + pred_key);
+		if(! between( this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) , originKey , pred_key ))
+			return;
+		Message m = new Message("DELETEFINGER " + originKey + " " + oldKey + " " + ip + " " +  port + " ");
+		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
+		System.out.println("Sent new delete to predecessor");
 	}
 	
 	
