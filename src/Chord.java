@@ -90,8 +90,7 @@ public class Chord {
 	    		this.populateFingerTable(new_peer);
 			}
 		}else {
-			if((this.key <= key && key < this.hash(successor))
-					|| (this.key > this.hash(successor) && (this.key <= key || key < this.hash(successor)))) {
+			if(this.between(this.key, this.hash(successor), key)) {
 				if(type == -1) {
 					Message m = new Message("SETPREDECCESSOR " + key + " " + ip + " " +  port);
 		    		m.sendMessage(this.successor.getHostName(), this.successor.getPort());
@@ -103,14 +102,14 @@ public class Chord {
 					m = new Message("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 		    		m.sendMessage(ip, port);
 				}else {
-					Message m = new Message("SETFINGER " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort() + " " + type);
+					Message m = new Message("SETFINGER " + this.hash(this.predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort() + " " + type);
 		    		m.sendMessage(ip, port);
 				}
 	    		
 			}else {
 				//InetSocketAddress closest = this.successor;
 				InetSocketAddress closest = closest_preceding_node(key);
-				System.out.println("Closest:  " + closest);
+				System.out.println("Closest to " + key + " is:  " + closest);
 				if(type == -1) {
 					String data = "GETSUCCESSOR " + key + " " + ip + " " +  port;
 					Message m = new Message(data);
@@ -132,21 +131,21 @@ public class Chord {
 	}
 	
 	public void setSuccessor(InetSocketAddress suc) {
-		System.out.println("New successor found");
 		this.successor = suc;
 		this.connected.set(true);
 		printKnowns();
 	}
 	public void setPredeccessor(InetSocketAddress pre) {
-		System.out.println("New predecessor found");
 		this.predeccessor = pre;
+		System.out.println("New predecessor found");
+		System.out.println("New successor found");
 		printKnowns();
 	}
 	
 	public void setFinger(int index, InetSocketAddress addrs ) {
 		//System.out.println("Setted finger");
 		this.fingerTable.put(index, addrs);
-		//this.printFingerTable();
+		this.printFingerTable();
 	}
 	
 	public Peer getPeer() {
@@ -164,16 +163,13 @@ public class Chord {
 	
 	private InetSocketAddress closest_preceding_node(int key) {
 		InetSocketAddress ret = null;
-		for(int i = M - 1; i >= 0; i--) {
-			ret = this.fingerTable.get(i);
-			if(ret == null)
-				continue;
-			if(hash(ret) < key)
-				break;
-			else
-				ret = this.fingerTable.get(i);
+		for(int i = M-1; i >= 0; i--) {
+			ret = this.fingerTable.get(M);
+			if(ret == null) continue;
+			if(between(this.key,key,hash(ret)))
+				return ret;
 		}
-		return ret;
+		return this.successor;
 	}
 	
 	public void printKnowns() {
@@ -185,8 +181,16 @@ public class Chord {
 	
 	public void printFingerTable() {
 		for(int i = 0; i < M; i++) {
-			System.out.println(i+": " + this.fingerTable.get(i));
+			System.out.println(i+": " + this.fingerTable.get(i) + "  maps to " + (int) ((this.key + Math.pow(2, i)) %  Math.pow(2, M)));
 		}
+	}
+	
+	private boolean between(int a, int b, int c) {
+		if(a < b && a <= c && c < b)
+			return true;
+		if(a > b && (c >= a || c < b))
+			return true;
+		return false;
 	}
 	
 	
