@@ -235,14 +235,30 @@ public class Chord {
 	}
 	
 	public void setSuccessor(InetSocketAddress suc) {
-		this.successor = suc;
+		if(this.successor == null)
+			this.successor = suc;
+		else {
+			if(this.successor.getHostName().equals(suc.getHostName())
+					&& this.successor.getPort() == suc.getPort())
+				this.successor = null;
+			else
+				this.successor = suc;
+		}
 		this.connected.set(true);
+		System.out.println("New successor found");
 		printKnowns();
 	}
 	public void setPredeccessor(InetSocketAddress pre) {
-		this.predeccessor = pre;
+		if(this.predeccessor == null)
+			this.predeccessor = pre;
+		else {
+			if(this.predeccessor.getHostName().equals(pre.getHostName())
+					&& this.predeccessor.getPort() == pre.getPort())
+				this.predeccessor = null;
+			else
+				this.predeccessor = pre;
+		}
 		System.out.println("New predecessor found");
-		System.out.println("New successor found");
 		printKnowns();
 	}
 	
