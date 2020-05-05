@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Chord {
 	
-	static final int M = 15;
+	static final int M = 5;
 	
 	private Peer peer;
 	
@@ -28,6 +28,7 @@ public class Chord {
 	int key;
 	
 	private AtomicBoolean connected = new AtomicBoolean(false);
+	private AtomicBoolean updating_fingers = new AtomicBoolean(false);
 	
 	public Chord(Peer p ,int port) {
 		this.peer = p;
@@ -48,7 +49,7 @@ public class Chord {
     }
 	
 	private int hash(InetSocketAddress addrss) {
-		return (int) (addrss.hashCode() % Math.pow(2, M));
+		return Math.abs((int) (addrss.hashCode() % Math.pow(2, M)));
 	}
 	
 	
@@ -63,9 +64,30 @@ public class Chord {
 		
 		while(this.connected.get() == false) {
 		}
-		System.out.println("Will find fingers");
-		this.updateFingerTable();
+		//updating_fingers.set(true);
+		//System.out.println("Will find fingers");
+		//this.updateFingerTable();
+		/*while(updating_fingers.get() == true) {
+		}*/
+		//System.out.println("Will update others fingers");
+		//this.updateOthersFingers();
 		
+		
+		System.out.println("Node joined ring");
+	}
+	
+	public void leaveRing() {
+		System.out.println("Started leaving process");
+		
+		Message m = new Message("SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
+		m.sendMessage(this.successor.getHostName(), this.successor.getPort());
+		
+		m = new Message("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
+		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
+		
+		
+		
+		System.out.println("Node left ring");
 	}
 	
 	
@@ -102,7 +124,7 @@ public class Chord {
 					m = new Message("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 		    		m.sendMessage(ip, port);
 				}else {
-					Message m = new Message("SETFINGER " + this.hash(this.predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort() + " " + type);
+					Message m = new Message("SETFINGER " + this.hash(this.successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort() + " " + type);
 		    		m.sendMessage(ip, port);
 				}
 	    		
@@ -125,8 +147,38 @@ public class Chord {
 	
 	public void updateFingerTable() {
 		for(int i = 0; i < M; i++) {
-			int index = (int) ((this.key + Math.pow(2, i)) %  Math.pow(2, M));
+			int index = Math.abs((int) ((this.key + Math.pow(2, i)) %  Math.pow(2, M)));
 			this.find_successor(index, this.selfAddress.getHostName(), this.selfAddress.getPort(), i);
+		}
+	}
+	
+	public void updateOthersFingers() {
+		/*for(int i = 0; i < M; i++) {
+			//Message m = new Message("FINDFINGER " + key + " " + ip + " " +  port + " " + type);
+    		//m.sendMessage(closest.getHostName(), closest.getPort());
+		}*/
+		
+		int destiny = Math.abs((int) ((this.hash(predeccessor) - Math.pow(2, M)) % Math.pow(2, M)));
+		int max = Math.abs((int) ((this.hash(selfAddress) - Math.pow(2, 0)) % Math.pow(2, M)));
+		
+		InetSocketAddress closest = closest_preceding_node(destiny);
+		
+		Message m = new Message("UPDATEFINGERTABLE " + destiny + " " + max + " " + 1);
+		m.sendMessage(closest.getHostName(), closest.getPort());
+	}
+	
+	public void checkUpdateFingerTable(int destiny, int max , int ttl) {
+		if(between(destiny,max,this.key)) {
+			this.updateFingerTable();
+			if(hash(this.successor) < max) {
+				Message m = new Message("UPDATEFINGERTABLE " + destiny + " " + max + " " + 1);
+				m.sendMessage(successor.getHostName(), successor.getPort());
+			}
+		}else if(ttl < 0){
+			ttl--;
+			InetSocketAddress closest = closest_preceding_node(destiny);
+			Message m = new Message("UPDATEFINGERTABLE " + destiny + " " + max + " " + ttl);
+			m.sendMessage(closest.getHostName(), closest.getPort());
 		}
 	}
 	

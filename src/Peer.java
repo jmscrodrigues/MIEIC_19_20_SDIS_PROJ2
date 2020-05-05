@@ -1,3 +1,6 @@
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -16,6 +19,15 @@ public class Peer {
 		
 		if(access_peer != null)
 			this.chord.joinRing(access_peer);
+		
+		
+		
+		Runtime.getRuntime().addShutdownHook(new Thread() 
+	    { 
+		      public void run() { 
+		    	  chord.leaveRing();
+		      } 
+		 });
 	}
 	
 	
