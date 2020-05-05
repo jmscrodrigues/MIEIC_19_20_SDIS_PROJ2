@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Chord {
 	
-	static final int M = 5;
+	static final int M = 6;
 	
 	private Peer peer;
 	
@@ -200,7 +200,7 @@ public class Chord {
 	
 	public void updateFingerTable() {
 		for(int i = 0; i < M; i++) {
-			int index = this.positiveModule((int) (this.key - Math.pow(2, i)), (int)  Math.pow(2, M));
+			int index = this.positiveModule((int) (this.key + Math.pow(2, i)), (int)  Math.pow(2, M));
 			this.find_successor(index, this.selfAddress.getHostName(), this.selfAddress.getPort(), i);
 		}
 	}
