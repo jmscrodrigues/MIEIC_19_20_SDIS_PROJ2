@@ -82,13 +82,12 @@ public class ChordMessageHandler implements Runnable {
 		    	this.chord.sendNotifyNewFinger(originKey, ip, port);
 			}
 			else if (op.equals("DELETEFINGER")) {
-				int oldKey = Integer.parseInt(parts[1]);
-				int exitKey = Integer.parseInt(parts[2]);
-				String delIp = parts[3];
-				String ip = parts[4];
-				int port = Integer.parseInt(parts[5]);
+				int exitKey = Integer.parseInt(parts[1]);
+				int oldKey = Integer.parseInt(parts[2]);
+				String ip = parts[3];
+				int port = Integer.parseInt(parts[4]);
 				this.chord.deleteFinger(oldKey, new InetSocketAddress(ip,port));
-				this.chord.sendNotifyDeleteFinger(exitKey, delIp);
+				this.chord.sendNotifyDeleteFinger(exitKey, oldKey, ip, port);
 			}
 		    
 		    
