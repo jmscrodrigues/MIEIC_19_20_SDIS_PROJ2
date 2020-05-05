@@ -79,17 +79,19 @@ public class Chord {
 	public void leaveRing() {
 		System.out.println("Started leaving process");
 		
-		Message m = new Message("SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
-		m.sendMessage(this.successor.getHostName(), this.successor.getPort());
-		
-		m = new Message("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
-		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
-		
-		//this.sendNotifyDeleteFinger(this.hash(predeccessor), this.key , this.successor.getHostName(), this.successor.getPort());
-		
-		m = new Message("DELETEFINGER " + this.hash(predeccessor) + " " + this.key + " " + this.successor.getHostName() + " " +  this.successor.getPort() );
-		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
-		System.out.println("Sent new delete to predecessor");
+		if(this.successor != null && this.predeccessor != null) {
+			Message m = new Message("SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
+			m.sendMessage(this.successor.getHostName(), this.successor.getPort());
+			
+			m = new Message("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
+			m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
+			
+			//this.sendNotifyDeleteFinger(this.hash(predeccessor), this.key , this.successor.getHostName(), this.successor.getPort());
+			
+			m = new Message("DELETEFINGER " + this.hash(predeccessor) + " " + this.key + " " + this.successor.getHostName() + " " +  this.successor.getPort() );
+			m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
+			System.out.println("Sent new delete to predecessor");
+		}
 		
 		System.out.println("Node left ring");
 	}
@@ -238,8 +240,8 @@ public class Chord {
 		if(this.successor == null)
 			this.successor = suc;
 		else {
-			if(this.successor.getHostName().equals(suc.getHostName())
-					&& this.successor.getPort() == suc.getPort())
+			if(this.selfAddress.getHostName().equals(suc.getHostName())
+					&& this.selfAddress.getPort() == suc.getPort())
 				this.successor = null;
 			else
 				this.successor = suc;
@@ -252,8 +254,8 @@ public class Chord {
 		if(this.predeccessor == null)
 			this.predeccessor = pre;
 		else {
-			if(this.predeccessor.getHostName().equals(pre.getHostName())
-					&& this.predeccessor.getPort() == pre.getPort())
+			if(this.selfAddress.getHostName().equals(pre.getHostName())
+					&& this.selfAddress.getPort() == pre.getPort())
 				this.predeccessor = null;
 			else
 				this.predeccessor = pre;
