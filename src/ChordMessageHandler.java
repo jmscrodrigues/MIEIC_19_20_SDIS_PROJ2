@@ -38,14 +38,31 @@ public class ChordMessageHandler implements Runnable {
 		    	int key = Integer.parseInt(parts[1]);
 		    	String ip = parts[2];
 		    	int port = Integer.parseInt(parts[3]);
-		    	this.chord.find_successor(key,ip,port);
-		    }else if(op.equals("SETSUCCESSOR")) {
+		    	this.chord.find_successor(key,ip,port,-1);
+		    }
+		    else if(op.equals("FINDFINGER")) {
+		    	int key = Integer.parseInt(parts[1]);
+		    	String ip = parts[2];
+		    	int port = Integer.parseInt(parts[3]);
+		    	int index = Integer.parseInt(parts[4]);
+		    	this.chord.find_successor(key,ip,port,index);
+		    }
+		    else if(op.equals("SETFINGER")) {
+		    	int key = Integer.parseInt(parts[1]);
+		    	String ip = parts[2];
+		    	int port = Integer.parseInt(parts[3]);
+		    	int index = Integer.parseInt(parts[4]);
+		    	this.chord.setFinger(index, new InetSocketAddress(ip,port));
+		    	//System.out.println("SETFINGER_RECEIVED");
+		    }
+		    else if(op.equals("SETSUCCESSOR")) {
 		    	int key = Integer.parseInt(parts[1]);
 		    	String ip = parts[2];
 		    	int port = Integer.parseInt(parts[3]);
 		    	InetSocketAddress sucessor = new InetSocketAddress(ip,port);
 		    	this.chord.setSuccessor(sucessor);
-		    }else if(op.equals("SETPREDECCESSOR")) {
+		    }
+		    else if(op.equals("SETPREDECCESSOR")) {
 		    	int key = Integer.parseInt(parts[1]);
 		    	String ip = parts[2];
 		    	int port = Integer.parseInt(parts[3]);
