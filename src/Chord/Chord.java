@@ -198,7 +198,7 @@ public class Chord {
 	}
 	
 	
-	public void put(String identifier, byte[] data) {
+	public void put	(String identifier, byte[] data) {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
 		Message m = new Message("PUT " + key , data);

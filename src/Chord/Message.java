@@ -25,7 +25,7 @@ public class Message {
 		this.data = d;
 	}
 	Message(String d, byte [] body){
-		String header = d.getBytes() + " " + CRLF + CRLF;
+		String header = d + " " + CRLF + CRLF;
 		byte[] headerB = header.getBytes();
 		data = new byte[headerB.length + body.length];
 		System.arraycopy(headerB, 0, data, 0, headerB.length);

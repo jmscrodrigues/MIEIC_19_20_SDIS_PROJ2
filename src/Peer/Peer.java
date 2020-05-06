@@ -16,6 +16,8 @@ public class Peer {
 	
 	Peer(int port, InetSocketAddress access_peer) {
 		
+		this.memory = new Memory();
+		
 		this.scheduler_executer = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
 		
 		this.chord = new Chord(this,port);
@@ -31,7 +33,10 @@ public class Peer {
 				e.printStackTrace();
 			}
 			
-			this.chord.put("ola", new String("siga").getBytes());
+			this.chord.put("ola", new String("jokinho").getBytes());
+			this.chord.put("eu", new String("gustavo").getBytes());
+			this.chord.put("tu", new String("gaspar").getBytes());
+			this.chord.put("chooclate", new String("jaulas").getBytes());
 			
 			try {
 				Thread.sleep(1000);
@@ -41,8 +46,10 @@ public class Peer {
 			}
 			
 			
-			String message = new String(this.chord.get("ola"), StandardCharsets.UTF_8);
-			System.out.println(message);
+			System.out.println(new String(this.chord.get("ola"), StandardCharsets.UTF_8));
+			System.out.println(new String(this.chord.get("eu"), StandardCharsets.UTF_8));
+			System.out.println(new String(this.chord.get("tu"), StandardCharsets.UTF_8));
+			System.out.println(new String(this.chord.get("chocolate"), StandardCharsets.UTF_8));
 		}
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() 
