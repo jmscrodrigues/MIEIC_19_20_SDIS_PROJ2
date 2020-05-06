@@ -23,7 +23,14 @@ public class Peer {
 		if(access_peer != null)
 			this.chord.joinRing(access_peer);
 		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
+		System.out.println(this.chord.lookup(1000));
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() 
 	    { 

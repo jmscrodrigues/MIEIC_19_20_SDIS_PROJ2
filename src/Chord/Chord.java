@@ -178,11 +178,40 @@ public class Chord {
 		}
 	}
 	
-	public void put(int identifier,byte[] data) {
-		/*int key = hash(identifier);
-		Message m = new Message("PUT " + key + " " + ip + " " +  port + " " + type);
-		m.sendMessage(closest.getHostName(), closest.getPort());*/
+	
+	
+	
+	public InetSocketAddress lookup(int key) {
+		InetSocketAddress ret = null;
+		
+		if(this.successor == null) {
+			return this.selfAddress;
+		}else if(this.between(this.key, this.hash(successor), key)) {
+			return this.successor;
+		}else {
+			InetSocketAddress closest = closest_preceding_node(key);
+			Message m = new Message("LOOKUP " + key);
+    		ret = m.lookup(closest.getHostName(), closest.getPort());
+		}
+		
+		return ret;
 	}
+	
+	
+	public void put(String identifier, byte[] data) {
+		int key = this.hash(identifier);
+		InetSocketAddress dest = this.lookup(key);
+		Message m = new Message("PUT " + key , data);
+		m.sendMessage(dest);
+	}
+	
+	public byte[] get(String identifier) {
+		int key = this.hash(identifier);
+		InetSocketAddress dest = this.lookup(key);
+		Message m = new Message("GET " + key);
+		return m.sendAndReceive(dest);
+	}
+
 	
 	public void foundNewFinger(InetSocketAddress finger) {
 		int key = this.hash(finger);
@@ -232,31 +261,6 @@ public class Chord {
 		}
 	}
 	
-	public void updateOthersFingers() {
-		
-		int destiny = this.positiveModule((int) (this.hash(predeccessor) - Math.pow(2, M)), (int)  Math.pow(2, M));
-		int max = this.positiveModule((int) (this.hash(selfAddress) - Math.pow(2, 0)), (int)  Math.pow(2, M));
-		InetSocketAddress closest = closest_preceding_node(destiny);
-		
-		Message m = new Message("UPDATEFINGERTABLE " + destiny + " " + max + " " + 1);
-		m.sendMessage(closest.getHostName(), closest.getPort());
-	}
-	
-	public void checkUpdateFingerTable(int destiny, int max , int ttl) {
-		if(between(destiny,max,this.key)) {
-			this.updateFingerTable();
-			if(hash(this.successor) < max) {
-				Message m = new Message("UPDATEFINGERTABLE " + destiny + " " + max + " " + 1);
-				m.sendMessage(successor.getHostName(), successor.getPort());
-			}
-		}else if(ttl < 0){
-			ttl--;
-			InetSocketAddress closest = closest_preceding_node(destiny);
-			Message m = new Message("UPDATEFINGERTABLE " + destiny + " " + max + " " + ttl);
-			m.sendMessage(closest.getHostName(), closest.getPort());
-		}
-	}
-	
 	public void setSuccessor(InetSocketAddress suc) {
 		if(this.successor == null)
 			this.successor = suc;
@@ -271,6 +275,7 @@ public class Chord {
 		System.out.println("New successor found");
 		printKnowns();
 	}
+	
 	public void setPredeccessor(InetSocketAddress pre) {
 		if(this.predeccessor == null)
 			this.predeccessor = pre;

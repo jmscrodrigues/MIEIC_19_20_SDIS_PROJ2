@@ -1,17 +1,46 @@
 package Chord;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class Message {
 	
-	String data;
+	static final String CRLF = String.valueOf((char)0xD) + String.valueOf((char)0xA) ;
+	
+	byte[] data;
+	
+	byte[] header;
+	byte[] body;
 	
 	Message(String d){
-		this.data = d;
+		this.data = d.getBytes();
+	}
+	Message(String d, byte [] body){
+		String header = d.getBytes() + " " + CRLF + CRLF;
+		byte[] headerB = header.getBytes();
+		data = new byte[headerB.length + data.length];
+		System.arraycopy(headerB, 0, data, 0, headerB.length);
+		System.arraycopy(body, 0, data, headerB.length, body.length);
 	}
 	
+	private void getHeaderAndBody(byte[] buf) {
+		for(int i = 0; i <= buf.length - 4 ; ++i) {
+			if(buf[i] == 0xD && buf[i+1] == 0xA && buf[i+2] == 0xD && buf[i+3] == 0xA) {
+				header = Arrays.copyOf(buf, i);
+				body = Arrays.copyOfRange(buf,i+4,buf.length);
+				break;
+			}
+		}
+	}
+	public void sendMessage(InetSocketAddress addrss) {
+		this.sendMessage(addrss.getHostName(),addrss.getPort());
+	}
 	public void sendMessage(String ip, int port) {
 		Socket socket = null;
 		try {
@@ -22,8 +51,7 @@ public class Message {
             System.exit(-1);
         }
 		
-
-		byte[] message = data.getBytes();
+		byte[] message = data;
 		try {
 			OutputStream out = socket.getOutputStream(); 
 		    DataOutputStream dos = new DataOutputStream(out);
@@ -33,9 +61,65 @@ public class Message {
 		}catch(IOException e) {
 			System.err.println("Error sending message.");
             System.err.println(e);
+            e.printStackTrace();
             System.exit(-1);
 		}
 	}
+	
+	public byte[] sendAndReceive(InetSocketAddress addrss) {
+		return this.sendAndReceive(addrss.getHostName(),addrss.getPort());
+	}
+	
+	public byte[] sendAndReceive(String ip, int port) {
+		Socket socket = null;
+		try {
+			socket = new Socket(ip, port);
+        } catch (IOException e) {
+            System.err.println("Could not connect to peer");
+            System.err.println(e);
+            System.exit(-1);
+        }
+		
+		byte[] message = data;
+		try {
+			OutputStream out = socket.getOutputStream(); 
+		    DataOutputStream dos = new DataOutputStream(out);
+		    dos.writeInt(message.length);
+		    dos.write(message,0,message.length);
+		}catch(IOException e) {
+			System.err.println("Error sending message.");
+            System.err.println(e);
+            e.printStackTrace();
+            System.exit(-1);
+		}
+		byte[] buf = null;
+		try {
+			InputStream in = socket.getInputStream();
+		    DataInputStream dis = new DataInputStream(in);
+		    int len = dis.readInt();
+		    buf = new byte[len];
+		    if (len > 0) {
+		        dis.readFully(buf);
+		    }
+		    socket.close();
+		}catch(IOException e) {
+            e.printStackTrace();
+			System.err.println("Error reading message!");
+            System.err.println(e);
+            e.printStackTrace();
+            System.exit(-1);
+		}	
+		return buf;
+	}
+	
+	public InetSocketAddress lookup(String ip, int port) {
+		byte[] buf = this.sendAndReceive(ip, port);
+		String received = new String(buf, StandardCharsets.UTF_8);
+	    String[] parts = received.split(" ");
+	    return new InetSocketAddress(parts[1],Integer.parseInt(parts[2]));
+	}
+	
+	
 	
 	
 }

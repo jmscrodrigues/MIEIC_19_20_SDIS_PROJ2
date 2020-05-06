@@ -1,10 +1,13 @@
 package Chord;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+
 
 public class ChordMessageHandler implements Runnable {
 	
@@ -27,7 +30,6 @@ public class ChordMessageHandler implements Runnable {
 		    if (len > 0) {
 		        dis.readFully(buf);
 		    }
-		    socket.close();
 		    
 		    String message = new String(buf, StandardCharsets.UTF_8);
 		    System.out.println(message);
@@ -69,11 +71,6 @@ public class ChordMessageHandler implements Runnable {
 		    	int port = Integer.parseInt(parts[3]);
 		    	InetSocketAddress sucessor = new InetSocketAddress(ip,port);
 		    	this.chord.setPredeccessor(sucessor);
-		    }else if(op.equals("UPDATEFINGERTABLE")) {
-		    	int destiny = Integer.parseInt(parts[1]);
-		    	int max = Integer.parseInt(parts[2]);
-		    	int ttl = Integer.parseInt(parts[3]);
-		    	this.chord.checkUpdateFingerTable(destiny, max, ttl);
 		    }
 		    else if(op.equals("NEWFINGER")) {
 		    	int originKey = Integer.parseInt(parts[1]);
@@ -90,7 +87,29 @@ public class ChordMessageHandler implements Runnable {
 				this.chord.deleteFinger(oldKey, new InetSocketAddress(ip,port));
 				this.chord.sendNotifyDeleteFinger(exitKey, oldKey, ip, port);
 			}
+			else if(op.equals("LOOKUP")) {
+				int key = Integer.parseInt(parts[1]);
+				InetSocketAddress ret = this.chord.lookup(key);
+				byte[] toSend = new String("LOOKUPRET " + ret.getHostName() + " " + ret.getPort()).getBytes();
+				try {
+					OutputStream out = socket.getOutputStream(); 
+				    DataOutputStream dos = new DataOutputStream(out);
+				    dos.writeInt(toSend.length);
+				    dos.write(toSend,0,toSend.length);
+				}catch(IOException e) {
+					System.err.println("Error sending message.");
+		            System.err.println(e);
+		            System.exit(-1);
+				}
+			}
+			else if(op.equals("PUT")) {
+				
+			}
+			else if(op.equals("GET")) {
+				
+			}
 		    
+		    socket.close();
 		    
 		    
 		}catch(IOException e) {
