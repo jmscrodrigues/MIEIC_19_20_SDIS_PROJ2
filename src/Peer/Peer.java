@@ -15,7 +15,7 @@ public class Peer {
 	
 	Peer(int port, InetSocketAddress access_peer) {
 		
-		/*this.scheduler_executer = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
+		this.scheduler_executer = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
 		
 		this.chord = new Chord(this,port);
 		
@@ -30,7 +30,7 @@ public class Peer {
 		      public void run() { 
 		    	  chord.leaveRing();
 		      } 
-		 });*/
+		 });
 		
 	}
 	
