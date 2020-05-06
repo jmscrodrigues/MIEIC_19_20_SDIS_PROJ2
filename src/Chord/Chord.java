@@ -14,7 +14,7 @@ import Peer.Peer;
 
 public class Chord {
 	
-	static final int M = 6;
+	static final int M = 15;
 	
 	private Peer peer;
 	
@@ -48,6 +48,8 @@ public class Chord {
         this.key = this.hash(selfAddress);
         
         this.peer.getExecuter().execute(new ChrodThread(this));
+        
+        System.out.println("Chord initiated with key " + this.key);
         
     }
 	
