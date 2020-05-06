@@ -1,9 +1,12 @@
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+package Peer;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+
+import Chord.Chord;
 
 public class Peer {
 	
@@ -12,7 +15,7 @@ public class Peer {
 	
 	Peer(int port, InetSocketAddress access_peer) {
 		
-		this.scheduler_executer = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
+		/*this.scheduler_executer = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
 		
 		this.chord = new Chord(this,port);
 		
@@ -27,8 +30,10 @@ public class Peer {
 		      public void run() { 
 		    	  chord.leaveRing();
 		      } 
-		 });
+		 });*/
+		
 	}
+	
 	
 	
 	public ScheduledThreadPoolExecutor getExecuter() {

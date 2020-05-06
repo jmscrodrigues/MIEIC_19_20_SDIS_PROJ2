@@ -1,12 +1,15 @@
-import java.io.DataOutputStream;
+package Chord;
+
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import Peer.Peer;
 
 
 public class Chord {
@@ -49,8 +52,30 @@ public class Chord {
     }
 	
 	private int hash(InetSocketAddress addrss) {
-		return Math.abs((int) (addrss.hashCode() % Math.pow(2, M)));
+		return hash(addrss.getHostName()+":"+addrss.getPort());
 	}
+	private int hash(String addrss) {
+		return hash(addrss,M);
+	}
+	private int hash(String fileString, int bits) {
+		int r = 0;
+		int m = (int) Math.ceil(bits/4.0);
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encodedhash = digest.digest(fileString.getBytes(StandardCharsets.UTF_8));
+
+            if(m > encodedhash.length) m = encodedhash.length;
+            for (int i = m-1; i >=0 ; i--) {
+            	r*=16;
+            	r+= 0xff & encodedhash[i];
+            }
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return (int) (r % Math.pow(2, bits));
+
+    }
 	
 	
 	public void joinRing(InetSocketAddress peer) {
@@ -64,15 +89,9 @@ public class Chord {
 		
 		while(this.connected.get() == false) {
 		}
-		//updating_fingers.set(true);
-		//System.out.println("Will find fingers");
+
 		this.updateFingerTable();
-		/*while(updating_fingers.get() == true) {
-		}*/
-		//System.out.println("Will update others fingers");
-		//this.updateOthersFingers();
-		
-		
+
 		System.out.println("Node joined ring");
 	}
 	
@@ -85,8 +104,6 @@ public class Chord {
 			
 			m = new Message("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
 			m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
-			
-			//this.sendNotifyDeleteFinger(this.hash(predeccessor), this.key , this.successor.getHostName(), this.successor.getPort());
 			
 			m = new Message("DELETEFINGER " + this.hash(predeccessor) + " " + this.key + " " + this.successor.getHostName() + " " +  this.successor.getPort() );
 			m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
@@ -159,6 +176,12 @@ public class Chord {
 		}
 	}
 	
+	public void put(int identifier,byte[] data) {
+		/*int key = hash(identifier);
+		Message m = new Message("PUT " + key + " " + ip + " " +  port + " " + type);
+		m.sendMessage(closest.getHostName(), closest.getPort());*/
+	}
+	
 	public void foundNewFinger(InetSocketAddress finger) {
 		int key = this.hash(finger);
 		for(int i = 0; i < M; i++) {
@@ -208,10 +231,6 @@ public class Chord {
 	}
 	
 	public void updateOthersFingers() {
-		/*for(int i = 0; i < M; i++) {
-			//Message m = new Message("FINDFINGER " + key + " " + ip + " " +  port + " " + type);
-    		//m.sendMessage(closest.getHostName(), closest.getPort());
-		}*/
 		
 		int destiny = this.positiveModule((int) (this.hash(predeccessor) - Math.pow(2, M)), (int)  Math.pow(2, M));
 		int max = this.positiveModule((int) (this.hash(selfAddress) - Math.pow(2, 0)), (int)  Math.pow(2, M));
