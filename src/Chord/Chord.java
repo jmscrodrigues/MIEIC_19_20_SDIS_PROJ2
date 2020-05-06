@@ -6,10 +6,14 @@ import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import Peer.Peer;
+import javafx.util.Pair;
 
 
 public class Chord {
@@ -33,7 +37,10 @@ public class Chord {
 	private AtomicBoolean connected = new AtomicBoolean(false);
 	private AtomicBoolean updating_fingers = new AtomicBoolean(false);
 	
+    private Memory memory;
+	
 	public Chord(Peer p ,int port) {
+		this.memory = new Memory();
 		this.peer = p;
         this.port = port;
         try {
@@ -53,32 +60,6 @@ public class Chord {
         
     }
 	
-	private int hash(InetSocketAddress addrss) {
-		return hash(addrss.getHostName()+":"+addrss.getPort());
-	}
-	private int hash(String addrss) {
-		return hash(addrss,M);
-	}
-	private int hash(String fileString, int bits) {
-		int r = 0;
-		int m = (int) Math.ceil(bits/4.0);
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] encodedhash = digest.digest(fileString.getBytes(StandardCharsets.UTF_8));
-
-            if(m > encodedhash.length) m = encodedhash.length;
-            for (int i = m-1; i >=0 ; i--) {
-            	r*=16;
-            	r+= 0xff & encodedhash[i];
-            }
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return (int) (r % Math.pow(2, bits));
-
-    }
-	
 	
 	public void joinRing(InetSocketAddress peer) {
 		this.access_peer = peer;
@@ -87,12 +68,17 @@ public class Chord {
 		
 		String data = "GETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
 		Message m = new Message(data);
-		m.sendMessage(peer.getHostName(), peer.getPort());
+		m.sendMessage(peer);
 		
 		while(this.connected.get() == false) {
 		}
 
 		this.updateFingerTable();
+		
+		System.out.println("Asking data to sucessor initiated");
+		
+		m = new Message("GETDATA " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+		m.sendMessage(successor);
 
 		System.out.println("Node joined ring");
 	}
@@ -101,6 +87,19 @@ public class Chord {
 		System.out.println("Started leaving process");
 		
 		if(this.successor != null && this.predeccessor != null) {
+			
+			System.out.println("Transfering data to sucessor initiated");
+			
+			ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
+			Set<Entry<Integer, byte[]>> entrySet = data.entrySet();
+			for(Iterator<ConcurrentHashMap.Entry<Integer, byte[]>> itr = entrySet.iterator(); itr.hasNext();) {
+				ConcurrentHashMap.Entry<Integer, byte[]> entry = itr.next();
+				Message m = new Message("PUT " + entry.getKey() , entry.getValue());
+				m.sendMessage(this.successor);
+			}
+			
+			System.out.println("Transfering data to sucessor done");
+			
 			Message m = new Message("SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
 			m.sendMessage(this.successor.getHostName(), this.successor.getPort());
 			
@@ -209,15 +208,32 @@ public class Chord {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
 		Message m = new Message("GET " + key);
-		return m.sendAndReceive(dest);
+		byte[] data =  m.sendAndReceive(dest);
+		return data;
 	}
 	
 	public void putInMemory(int key, byte[] data) {
-		this.peer.getMemory().addChunk(key, data);
+		this.getMemory().put(key, data);
 	}
 	
 	public byte[] getInMemory(int key) {
-		return this.peer.getMemory().getChunksStored(key);
+		return this.getMemory().get(key);
+	}
+	
+	public void sendData(int key, String ip, int port) {
+		InetSocketAddress pre = new InetSocketAddress(ip,port);
+		ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
+		Set<Entry<Integer, byte[]>> entrySet = data.entrySet();
+		for(Iterator<ConcurrentHashMap.Entry<Integer, byte[]>> itr = entrySet.iterator(); itr.hasNext();) {
+			ConcurrentHashMap.Entry<Integer, byte[]> entry = itr.next();
+			int id = entry.getKey();
+			if(id < key) {
+				Message m = new Message("PUT " + entry.getKey() , entry.getValue());
+				data.remove(id);
+				m.sendMessage(pre);
+			}
+		}
+		
 	}
 
 	
@@ -328,6 +344,11 @@ public class Chord {
 		return this.successor;
 	}
 	
+	
+	
+	
+	
+	
 	public void printKnowns() {
 		if(this.predeccessor != null)
 			System.out.println("Predeccessor: " + this.predeccessor.getHostName() + "   " + this.predeccessor.getPort() );
@@ -340,6 +361,10 @@ public class Chord {
 			System.out.println(i+": " + this.fingerTable.get(i) + "  maps to " + (int) ((this.key + Math.pow(2, i)) %  Math.pow(2, M)));
 		}
 	}
+	
+	
+	
+	
 	
 	private boolean between(int a, int b, int c) {
 		if(a < b && a <= c && c < b)
@@ -354,5 +379,36 @@ public class Chord {
 			a+=m;
 		return a % m;
 	}
+	
+	private Memory getMemory() {
+		return this.memory;
+	}
+	
+	private int hash(InetSocketAddress addrss) {
+		return hash(addrss.getHostName()+":"+addrss.getPort());
+	}
+	private int hash(String addrss) {
+		return hash(addrss,M);
+	}
+	private int hash(String fileString, int bits) {
+		int r = 0;
+		int m = (int) Math.ceil(bits/4.0);
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encodedhash = digest.digest(fileString.getBytes(StandardCharsets.UTF_8));
+
+            if(m > encodedhash.length) m = encodedhash.length;
+            for (int i = m-1; i >=0 ; i--) {
+            	r*=16;
+            	r+= 0xff & encodedhash[i];
+            }
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return (int) (r % Math.pow(2, bits));
+
+    }
+
 	
 }

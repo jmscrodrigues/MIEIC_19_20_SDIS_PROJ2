@@ -12,11 +12,9 @@ public class Peer {
 	
 	private Chord chord;
     private ScheduledThreadPoolExecutor scheduler_executer;
-    private Memory memory;
 	
 	Peer(int port, InetSocketAddress access_peer) {
 		
-		this.memory = new Memory();
 		
 		this.scheduler_executer = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
 		
@@ -33,10 +31,7 @@ public class Peer {
 				e.printStackTrace();
 			}
 			
-			this.chord.put("ola", new String("jokinho").getBytes());
-			this.chord.put("eu", new String("gustavo").getBytes());
-			this.chord.put("tu", new String("gaspar").getBytes());
-			this.chord.put("chooclate", new String("jaulas").getBytes());
+			this.chord.put(String.valueOf(port), new String("jokinho").getBytes());
 			
 			try {
 				Thread.sleep(1000);
@@ -46,23 +41,17 @@ public class Peer {
 			}
 			
 			
-			System.out.println(new String(this.chord.get("ola"), StandardCharsets.UTF_8));
-			System.out.println(new String(this.chord.get("eu"), StandardCharsets.UTF_8));
-			System.out.println(new String(this.chord.get("tu"), StandardCharsets.UTF_8));
-			System.out.println(new String(this.chord.get("chocolate"), StandardCharsets.UTF_8));
+			System.out.println("ola: " + new String(this.chord.get(String.valueOf(2020)), StandardCharsets.UTF_8));
 		}
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() 
 	    { 
 		      public void run() { 
+		    	  System.out.println("acabar");
 		    	  chord.leaveRing();
 		      } 
 		 });
 		
-	}
-	
-	public Memory getMemory() {
-		return this.memory;
 	}
 	
 	public ScheduledThreadPoolExecutor getExecuter() {

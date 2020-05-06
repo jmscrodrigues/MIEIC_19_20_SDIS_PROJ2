@@ -113,6 +113,9 @@ public class ChordMessageHandler implements Runnable {
 				Message m = new Message(buf);
 				m.getHeaderAndBody();
 				byte[] toSend = this.chord.getInMemory(key);
+				if(toSend == null) {
+					toSend = new String("").getBytes();
+				}
 				try {
 					OutputStream out = socket.getOutputStream(); 
 				    DataOutputStream dos = new DataOutputStream(out);
@@ -123,6 +126,12 @@ public class ChordMessageHandler implements Runnable {
 		            System.err.println(e);
 		            System.exit(-1);
 				}
+			}
+			else if(op.equals("GETDATA")) {
+				int key = Integer.parseInt(parts[1]);
+		    	String ip = parts[2];
+		    	int port = Integer.parseInt(parts[3]);
+				this.chord.sendData(key,ip,port);
 			}
 		    
 		    socket.close();
