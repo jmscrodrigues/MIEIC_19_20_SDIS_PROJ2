@@ -103,10 +103,26 @@ public class ChordMessageHandler implements Runnable {
 				}
 			}
 			else if(op.equals("PUT")) {
-				
+				int key = Integer.parseInt(parts[1]);
+				Message m = new Message(buf);
+				m.getHeaderAndBody();
+				this.chord.putInMemory(key, m.body);
 			}
 			else if(op.equals("GET")) {
-				
+				int key = Integer.parseInt(parts[1]);
+				Message m = new Message(buf);
+				m.getHeaderAndBody();
+				byte[] toSend = this.chord.getInMemory(key);
+				try {
+					OutputStream out = socket.getOutputStream(); 
+				    DataOutputStream dos = new DataOutputStream(out);
+				    dos.writeInt(toSend.length);
+				    dos.write(toSend,0,toSend.length);
+				}catch(IOException e) {
+					System.err.println("Error sending message.");
+		            System.err.println(e);
+		            System.exit(-1);
+				}
 			}
 		    
 		    socket.close();

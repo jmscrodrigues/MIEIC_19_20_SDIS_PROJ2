@@ -7,17 +7,17 @@ import java.util.List;
 
 public class Memory {
     
-    private ConcurrentHashMap<Integer,List<Byte>> chunksStored = new ConcurrentHashMap<Integer,List<Byte>>();
+    private ConcurrentHashMap<Integer,byte[]> chunksStored = new ConcurrentHashMap<Integer,byte[]>();
 
     Memory() {
     }
 
 
-    public List<Byte> getChunksStored(int fileId) {
+    public byte[] getChunksStored(int fileId) {
         return chunksStored.get(fileId);
     }
 
-    public void addChunk(int fileId, List<Byte> chunk) {
+    public void addChunk(int fileId, byte[] chunk) {
         chunksStored.put(fileId, chunk);
         return;
     }

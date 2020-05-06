@@ -211,6 +211,14 @@ public class Chord {
 		Message m = new Message("GET " + key);
 		return m.sendAndReceive(dest);
 	}
+	
+	public void putInMemory(int key, byte[] data) {
+		this.peer.getMemory().addChunk(key, data);
+	}
+	
+	public byte[] getInMemory(int key) {
+		return this.peer.getMemory().getChunksStored(key);
+	}
 
 	
 	public void foundNewFinger(InetSocketAddress finger) {

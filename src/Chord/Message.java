@@ -21,15 +21,19 @@ public class Message {
 	Message(String d){
 		this.data = d.getBytes();
 	}
+	Message(byte[] d){
+		this.data = d;
+	}
 	Message(String d, byte [] body){
 		String header = d.getBytes() + " " + CRLF + CRLF;
 		byte[] headerB = header.getBytes();
-		data = new byte[headerB.length + data.length];
+		data = new byte[headerB.length + body.length];
 		System.arraycopy(headerB, 0, data, 0, headerB.length);
 		System.arraycopy(body, 0, data, headerB.length, body.length);
 	}
 	
-	private void getHeaderAndBody(byte[] buf) {
+	public void getHeaderAndBody() {
+		byte[] buf = data;
 		for(int i = 0; i <= buf.length - 4 ; ++i) {
 			if(buf[i] == 0xD && buf[i+1] == 0xA && buf[i+2] == 0xD && buf[i+3] == 0xA) {
 				header = Arrays.copyOf(buf, i);

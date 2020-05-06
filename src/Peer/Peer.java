@@ -12,6 +12,7 @@ public class Peer {
 	
 	private Chord chord;
     private ScheduledThreadPoolExecutor scheduler_executer;
+    private Memory memory;
 	
 	Peer(int port, InetSocketAddress access_peer) {
 		
@@ -20,17 +21,29 @@ public class Peer {
 		this.chord = new Chord(this,port);
 		
 		
-		if(access_peer != null)
+		if(access_peer != null) {
 			this.chord.joinRing(access_peer);
 		
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			this.chord.put("ola", new String("siga").getBytes());
+			
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+			String message = new String(this.chord.get("ola"), StandardCharsets.UTF_8);
+			System.out.println(message);
 		}
-		
-		System.out.println(this.chord.lookup(1000));
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() 
 	    { 
@@ -41,7 +54,9 @@ public class Peer {
 		
 	}
 	
-	
+	public Memory getMemory() {
+		return this.memory;
+	}
 	
 	public ScheduledThreadPoolExecutor getExecuter() {
 		return this.scheduler_executer;
