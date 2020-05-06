@@ -1,28 +1,36 @@
 package Peer;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.io.Serializable;
 import java.util.ArrayList;
-
+import java.util.List;
 
 public class Memory {
     
-    private CopyOnWriteArrayList<Byte> chunksStored = new CopyOnWriteArrayList<Byte>();
-    private int fileId;
+    private ConcurrentHashMap<Integer,List<Byte>> chunksStored = new ConcurrentHashMap<Integer,List<Byte>>();
 
-    Memory(int fileId) {
-        this.fileId = fileId;
+    Memory() {
     }
 
-    public int getFileId() {
-        return this.fileId;
+
+    public List<Byte> getChunksStored(int fileId) {
+        return chunksStored.get(fileId);
     }
 
-    public CopyOnWriteArrayList<Byte> getChunksStored() {
-        return chunksStored;
+    public void addChunk(int fileId, List<Byte> chunk) {
+        chunksStored.put(fileId, chunk);
+        return;
     }
 
-    public void addChunk(byte chunk) {
-        chunksStored.add(chunk);
-    }
+    /*
+        Returns 0 on success, -1 on error
+    */
+    public int removeChunk(int fileId) {
+        if (chunksStored.get(fileId) == null) {
+            return -1;
+        }
 
+        chunksStored.remove(fileId);
+        return 0;
+    }
 }
