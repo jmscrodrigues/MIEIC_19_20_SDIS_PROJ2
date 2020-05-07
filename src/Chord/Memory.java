@@ -1,17 +1,9 @@
 package Chord;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Memory {
     
-    private ConcurrentHashMap<Integer,byte[]> data = new ConcurrentHashMap<Integer,byte[]>();
-
-    public Memory() {
-    }
-
+    private final ConcurrentHashMap<Integer, byte[]> data = new ConcurrentHashMap<>();
 
     public byte[] get(int fileId) {
         return data.get(fileId);
@@ -19,19 +11,17 @@ public class Memory {
 
     public void put(int fileId, byte[] chunk) {
     	data.put(fileId, chunk);
-        return;
     }
 
     /*
-        Returns 0 on success, -1 on error
+        Returns data on success, null on error
     */
-    public int remove(int fileId) {
+    public byte[] remove(int fileId) {
         if (data.get(fileId) == null) {
-            return -1;
+            return null;
         }
 
-        data.remove(fileId);
-        return 0;
+        return data.remove(fileId);
     }
     
     public ConcurrentHashMap<Integer,byte[]> getData(){

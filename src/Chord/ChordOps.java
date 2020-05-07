@@ -14,4 +14,5 @@ public interface ChordOps {
     String GET_DATA = "GETDATA";
     String GET_PREDECCESSOR = "GETPREDECCESSOR";
     String NOTIFY = "NOTIFY";
+    String REMOVE = "REMOVE";
 }

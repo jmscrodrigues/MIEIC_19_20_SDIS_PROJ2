@@ -90,6 +90,17 @@ public class ChordMessageHandler implements Runnable {
 				this.chord.notify(new InetSocketAddress(message.ip, message.port));
 				break;
 			}
+			case ChordOps.REMOVE: {
+				Message m = new Message(message.buf);
+				m.getHeaderAndBody();
+
+				byte[] toSend = this.chord.removeInMemory(message.key);
+				if(toSend == null) 
+					toSend = "".getBytes();
+				
+				this.writeToSocket(toSend);
+				break;
+			}
 		}
 
 		try {

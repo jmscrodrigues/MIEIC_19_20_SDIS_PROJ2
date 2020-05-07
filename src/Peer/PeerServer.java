@@ -1,27 +1,29 @@
-package Chord;
+package Peer;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-public class ChordThread implements Runnable{
+public class PeerServer implements Runnable{
 
-	private final Chord chord;
+	private final Peer peer;
 	
-	ChordThread(Chord c){
-		this.chord = c;
+	PeerServer(Peer p){
+		this.peer = p;
 	}
 	
 	@Override
 	public void run() {
-		ScheduledThreadPoolExecutor scheduler_executor = this.chord.getPeer().getExecutor();
-		ServerSocket server = this.chord.getServerSocket();
+		ScheduledThreadPoolExecutor scheduler_executor = this.peer.getExecutor();
+		ServerSocket server = this.peer.getServerSocket();
 
 		while (true) {
+
             try {
-            	scheduler_executor.execute(new ChordMessageHandler(this.chord,server.accept()));
+            	scheduler_executor.execute(new PeerMessageHandler(this.peer, server.accept()));
                 
             } catch (IOException e) {
-            	if (server.isClosed())
+            	if(server.isClosed())
             		System.out.println("Server closed");
             	else
             		System.out.println(e.toString());
@@ -29,5 +31,4 @@ public class ChordThread implements Runnable{
             }
         }
 	}
-
 }

@@ -1,5 +1,7 @@
 package Peer;
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -8,44 +10,52 @@ import Chord.Chord;
 
 public class Peer {
 	
-	private Chord chord;
-    private ScheduledThreadPoolExecutor scheduler_executor;
-	
-	Peer(int port, InetSocketAddress access_peer) {
+	private final Chord chord;
+	private ServerSocket serverSocket;
+    private final ScheduledThreadPoolExecutor scheduler_executor;
+
+	Peer(int server_port, int chord_port, InetSocketAddress access_peer) {
 
 		this.scheduler_executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
-		this.chord = new Chord(this,port);
 
-		if (access_peer != null) {
-			this.chord.joinRing(access_peer);
-		
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			this.chord.put(String.valueOf(port), new String("jokinho").getBytes());
-			
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			
-			System.out.println("ola: " + new String(this.chord.get(String.valueOf(2020)), StandardCharsets.UTF_8));
+		try {
+			serverSocket = new ServerSocket(server_port);
+		} catch (IOException e) {
+			System.err.println("Could not create the server socket");
+			e.printStackTrace();
 		}
-		
-		Runtime.getRuntime().addShutdownHook(new Thread() 
-	    { 
-		      public void run() { 
-		    	  System.out.println("acabar");
-		    	  chord.leaveRing();
-		      } 
-		 });
+
+		this.scheduler_executor.execute(new PeerServer(this));
+		this.chord = new Chord(this, chord_port);
+
+		if (access_peer != null)
+			this.chord.joinRing(access_peer);
+
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				chord.leaveRing();
+			}
+		});
+	}
+	
+	public String put(String key, String value) {
+		this.chord.put(key, value.getBytes());
+		return "Inserted with sucess";
+	}
+	
+	public String get(String key) {
+		byte[] ret = this.chord.get(key);
+		String value = new String(ret, StandardCharsets.UTF_8);
+		return value;
+	}
+	public String remove(String key) {
+		byte[] ret = this.chord.remove(key);
+		String value = new String(ret, StandardCharsets.UTF_8);
+		return value;
+	}
+	
+	public ServerSocket getServerSocket() {
+		return this.serverSocket;
 	}
 	
 	public ScheduledThreadPoolExecutor getExecutor() {
@@ -53,23 +63,24 @@ public class Peer {
 	}
 	
 	public static void main(String[] args) {
-		
-		if (args.length != 1 && args.length != 2) {
-			System.out.println("Usage: Peer <port> [<peer_ip>:<peer_port>]");
+
+		if (args.length != 2 && args.length != 3) {
+			System.out.println("Usage: Peer <peer_port> <chord_port> [<peer_ip>:<peer_port>]");
 			System.exit(0);
 		}
-
-		int port = Integer.parseInt(args[0]);
+		
+		int serve_port = Integer.parseInt(args[0]);
+		int chord_port = Integer.parseInt(args[1]);
 		InetSocketAddress access_peer = null;
 		
-		if (args.length == 2) {
-			String[] parts = args[1].split(":");
-			access_peer = new InetSocketAddress(parts[0],Integer.parseInt(parts[1]));
+		if(args.length == 3) {
+			String[] parts = args[2].split(":");
+			access_peer = new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
 		}
 		
-		Peer peer = new Peer(port, access_peer);
+		Peer peer = new Peer(serve_port, chord_port, access_peer);
 
-
+		System.out.println("Hello world");
 	}
 
 }

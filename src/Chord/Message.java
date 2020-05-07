@@ -21,9 +21,11 @@ public class Message {
 	Message(String d){
 		this.data = d.getBytes();
 	}
-	Message(byte[] d){
+
+	Message(byte[] d) {
 		this.data = d;
 	}
+
 	Message(String d, byte [] body){
 		String header = d + " " + CRLF + CRLF;
 		byte[] headerB = header.getBytes();
@@ -139,8 +141,6 @@ public class Message {
 	    String[] parts = received.split(" ");
 	    return new InetSocketAddress(parts[1],Integer.parseInt(parts[2]));
 	}
-	
-	
-	
+
 	
 }
