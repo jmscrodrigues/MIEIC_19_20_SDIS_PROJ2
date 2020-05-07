@@ -40,6 +40,8 @@ public class Chord {
 	private AtomicBoolean updating_fingers = new AtomicBoolean(false);
 	
     private Memory memory;
+    
+    int nextFinger = 0;
 	
 	public Chord(Peer p ,int port) {
 		this.memory = new Memory();
@@ -305,29 +307,46 @@ public class Chord {
 		if(! betweenOpenOpen( this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) , originKey , pred_key ))
 			return;
 		Message m = new Message("NEWFINGER " + originKey + " " + ip + " " +  port + " ");
-		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
+		m.sendMessage(this.predeccessor);
 		System.out.println("Sent new finger to predecessor");
 	}
 	
 	public void sendNotifyDeleteFinger(int originKey , int oldKey, String ip, int port) {
 		int pred_key = this.hash(this.predeccessor);
 		
-		
 		int max_origin = this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M));
 		System.out.println(max_origin + "  " + originKey + " " + pred_key);
 		if(! betweenOpenOpen( max_origin , originKey , pred_key ))
 			return;
 		Message m = new Message("DELETEFINGER " + originKey + " " + oldKey + " " + ip + " " +  port + " ");
-		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
+		m.sendMessage(this.predeccessor);
 		System.out.println("Sent new delete to predecessor");
 	}
 	
 	//TODO:: UPDATE THIS TO USER LOOKUP!
-	public void updateFingerTable() {
+	/*public void updateFingerTable() {
 		for(int i = 0; i < M; i++) {
 			int index = this.positiveModule((int) (this.key + Math.pow(2, i)), (int)  Math.pow(2, M));
 			this.find_successor(index, this.selfAddress.getHostName(), this.selfAddress.getPort(), i);
 		}
+	}*/
+	//Maybe done here ??
+	public void updateFingerTable() {
+		InetSocketAddress finger = null;
+		for(int i = 0; i < M; i++) {
+			int index = this.positiveModule((int) (this.key + Math.pow(2, i)), (int)  Math.pow(2, M));
+			if(finger == null || !betweenOpenOpen(this.key,hash(finger),index))
+				finger = this.lookup(index);
+			this.fingerTable.put(i, finger);
+		}
+	}
+	
+	public void fix_fingers() {
+		if(this.nextFinger == M)
+			this.nextFinger = 0;
+		int index = this.positiveModule((int) (this.key + Math.pow(2, this.nextFinger)), (int)  Math.pow(2, M));
+		this.fingerTable.put(this.nextFinger, this.lookup(index));
+		this.nextFinger++;
 	}
 	
 	public void setSuccessor(InetSocketAddress suc) {
