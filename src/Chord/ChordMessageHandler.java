@@ -133,6 +133,32 @@ public class ChordMessageHandler implements Runnable {
 		    	int port = Integer.parseInt(parts[3]);
 				this.chord.sendData(key,ip,port);
 			}
+		    else if(op.equals("GETPREDECCESSOR")) {
+		    	InetSocketAddress pre = this.chord.getPredeccessor();
+		    	//Message out = new Message("PREDECESSOR " + pre.getHostName() + " " + pre.getPort());
+		    	//out.sendMessage(socket);
+		    	byte[] toSend = new String("PREDECCESSOR " + pre.getHostName() + " " + pre.getPort()).getBytes();
+		    	System.out.println("Sending Predecessor");
+		    	if(toSend == null) {
+					toSend = new String("").getBytes();
+				}
+				try {
+					OutputStream out = socket.getOutputStream(); 
+				    DataOutputStream dos = new DataOutputStream(out);
+				    dos.writeInt(toSend.length);
+				    dos.write(toSend,0,toSend.length);
+				}catch(IOException e) {
+					System.err.println("Error sending message.");
+		            System.err.println(e);
+		            System.exit(-1);
+				}
+		    }
+		    else if(op.equals("NOTIFY")) {
+		    	int key = Integer.parseInt(parts[1]);
+		    	String ip = parts[2];
+		    	int port = Integer.parseInt(parts[3]);
+		    	this.chord.notify(new InetSocketAddress(ip, port));
+		    }
 		    
 		    socket.close();
 		    

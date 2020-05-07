@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import Peer.Peer;
@@ -19,6 +20,7 @@ import javafx.util.Pair;
 public class Chord {
 	
 	static final int M = 15;
+	static final int UPDATE_TIME = 8;
 	
 	private Peer peer;
 	
@@ -56,6 +58,8 @@ public class Chord {
         
         this.peer.getExecuter().execute(new ChrodThread(this));
         
+        this.getPeer().getExecuter().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
+        
         System.out.println("Chord initiated with key " + this.key);
         
     }
@@ -81,6 +85,7 @@ public class Chord {
 		m.sendMessage(successor);
 
 		System.out.println("Node joined ring");
+		
 	}
 	
 	public void leaveRing() {
@@ -140,7 +145,7 @@ public class Chord {
 			return;
 		}
 		//se a chave que se procura estiver entre mim e o meu sucessor, logo deu hit!
-		if(this.between(this.key, this.hash(successor), key)) {
+		if(this.betweenOpenClose(this.key, this.hash(successor), key)) {
 			if(type == -1) { // se for um lookup do successor
 				Message m = new Message("SETPREDECCESSOR " + key + " " + ip + " " +  port);
 	    		m.sendMessage(this.successor.getHostName(), this.successor.getPort());
@@ -185,7 +190,7 @@ public class Chord {
 		
 		if(this.successor == null) {
 			return this.selfAddress;
-		}else if(this.between(this.key, this.hash(successor), key)) {
+		}else if(this.betweenOpenClose(this.key, this.hash(successor), key)) {
 			return this.successor;
 		}else {
 			InetSocketAddress closest = closest_preceding_node(key);
@@ -219,7 +224,11 @@ public class Chord {
 	public byte[] getInMemory(int key) {
 		return this.getMemory().get(key);
 	}
+	 
 	
+	/*
+	 * Send data to node that has just joined
+	 */
 	public void sendData(int key, String ip, int port) {
 		InetSocketAddress pre = new InetSocketAddress(ip,port);
 		ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
@@ -227,7 +236,7 @@ public class Chord {
 		for(Iterator<ConcurrentHashMap.Entry<Integer, byte[]>> itr = entrySet.iterator(); itr.hasNext();) {
 			ConcurrentHashMap.Entry<Integer, byte[]> entry = itr.next();
 			int id = entry.getKey();
-			if(id < key) {
+			if(betweenOpenClose(this.key,key,id)) {
 				Message m = new Message("PUT " + entry.getKey() , entry.getValue());
 				data.remove(id);
 				m.sendMessage(pre);
@@ -235,13 +244,47 @@ public class Chord {
 		}
 		
 	}
-
+	
+	/*
+	 * Get predecessor of node passed as argument
+	 */
+	public InetSocketAddress getPredeccessor(InetSocketAddress node) {
+		InetSocketAddress ret = null;
+		Message m = new Message("GETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+		byte [] buf = m.sendAndReceive(this.successor);
+		
+		String message = new String(buf, StandardCharsets.UTF_8);
+	    System.out.println(message);
+	    String[] parts = message.split(" ");
+	    
+	    ret = new InetSocketAddress(parts[1],Integer.parseInt(parts[2]));
+	    System.out.println("Get predeccessor done!");
+		return ret;
+	}
+	
+	public void notify(InetSocketAddress pre) {
+		if(this.predeccessor == null || betweenOpenOpen(hash(this.predeccessor),this.key,hash(pre))) {
+			this.setPredeccessor(pre);
+		}
+	}
+	
+	
+	public void stabilize() {
+		if(this.successor == null)
+			return;
+		InetSocketAddress x = this.getPredeccessor(this.successor);
+		if(betweenOpenOpen(this.key,hash(this.successor),hash(x))) {
+			this.setSuccessor(x);
+		}
+		Message m = new Message("NOTIFY " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+		m.sendMessage(successor);
+	}
 	
 	public void foundNewFinger(InetSocketAddress finger) {
 		int key = this.hash(finger);
 		for(int i = 0; i < M; i++) {
 			int prev_key = this.hash(this.fingerTable.get(i));
-			if(between(this.key,prev_key,key)) {
+			if(betweenOpenOpen(this.key,prev_key,key)) {
 				this.fingerTable.replace(i, finger);
 			}
 		}
@@ -259,7 +302,7 @@ public class Chord {
 		int pred_key = this.hash(this.predeccessor);
 		
 		System.out.println(this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) + "  " + originKey + " " + pred_key);
-		if(! between( this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) , originKey , pred_key ))
+		if(! betweenOpenOpen( this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) , originKey , pred_key ))
 			return;
 		Message m = new Message("NEWFINGER " + originKey + " " + ip + " " +  port + " ");
 		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
@@ -269,15 +312,17 @@ public class Chord {
 	public void sendNotifyDeleteFinger(int originKey , int oldKey, String ip, int port) {
 		int pred_key = this.hash(this.predeccessor);
 		
-		System.out.println(this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) + "  " + originKey + " " + pred_key);
-		if(! between( this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) , originKey , pred_key ))
+		
+		int max_origin = this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M));
+		System.out.println(max_origin + "  " + originKey + " " + pred_key);
+		if(! betweenOpenOpen( max_origin , originKey , pred_key ))
 			return;
 		Message m = new Message("DELETEFINGER " + originKey + " " + oldKey + " " + ip + " " +  port + " ");
 		m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());
 		System.out.println("Sent new delete to predecessor");
 	}
 	
-	
+	//TODO:: UPDATE THIS TO USER LOOKUP!
 	public void updateFingerTable() {
 		for(int i = 0; i < M; i++) {
 			int index = this.positiveModule((int) (this.key + Math.pow(2, i)), (int)  Math.pow(2, M));
@@ -338,7 +383,7 @@ public class Chord {
 		for(int i = M-1; i >= 0; i--) {
 			ret = this.fingerTable.get(M);
 			if(ret == null) continue;
-			if(between(this.key,key,hash(ret)))
+			if(betweenOpenOpen(this.key,key,hash(ret)))
 				return ret;
 		}
 		return this.successor;
@@ -350,10 +395,11 @@ public class Chord {
 	
 	
 	public void printKnowns() {
+		System.out.println("My key: " + this.key);
 		if(this.predeccessor != null)
-			System.out.println("Predeccessor: " + this.predeccessor.getHostName() + "   " + this.predeccessor.getPort() );
+			System.out.println("Predeccessor: " + this.predeccessor.getHostName() + "   " + this.predeccessor.getPort() + " " + hash(this.predeccessor) );
 		if(this.successor != null)
-			System.out.println("Successor: " + this.successor.getHostName() + "   " + this.successor.getPort() );
+			System.out.println("Successor: " + this.successor.getHostName() + "   " + this.successor.getPort()  + " " + hash(this.successor) );
 	}
 	
 	public void printFingerTable() {
@@ -366,10 +412,26 @@ public class Chord {
 	
 	
 	
-	private boolean between(int a, int b, int c) {
-		if(a < b && a <= c && c < b)
+	/*private boolean between(int a, int b, int c) {
+		if(a < b && a < c && c < b)
 			return true;
-		if(a > b && (c >= a || c < b))
+		if(a > b && (c > a || c < b))
+			return true;
+		return false;
+	}*/
+	
+	private boolean betweenOpenClose(int a, int b, int c) {
+		if(a < b && a < c && c <= b)
+			return true;
+		if(a > b && (c > a || c <= b))
+			return true;
+		return false;
+	}
+	
+	private boolean betweenOpenOpen(int a, int b, int c) {
+		if(a < b && a < c && c < b)
+			return true;
+		if(a > b && (c > a || c < b))
 			return true;
 		return false;
 	}
@@ -378,6 +440,10 @@ public class Chord {
 		while(a < 0)
 			a+=m;
 		return a % m;
+	}
+	
+	public InetSocketAddress getPredeccessor() {
+		return this.predeccessor;
 	}
 	
 	private Memory getMemory() {

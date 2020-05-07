@@ -45,6 +45,23 @@ public class Message {
 	public void sendMessage(InetSocketAddress addrss) {
 		this.sendMessage(addrss.getHostName(),addrss.getPort());
 	}
+	
+	public void sendMessage(Socket socket) {	
+		byte[] message = data;
+		try {
+			OutputStream out = socket.getOutputStream(); 
+		    DataOutputStream dos = new DataOutputStream(out);
+		    dos.writeInt(message.length);
+		    dos.write(message,0,message.length);
+		    socket.close();
+		}catch(IOException e) {
+			System.err.println("Error sending message.");
+            System.err.println(e);
+            e.printStackTrace();
+            System.exit(-1);
+		}
+	}
+	
 	public void sendMessage(String ip, int port) {
 		Socket socket = null;
 		try {
