@@ -219,12 +219,24 @@ public class Chord {
 		return data;
 	}
 	
+	public byte[] remove(String identifier) {
+		int key = this.hash(identifier);
+		InetSocketAddress dest = this.lookup(key);
+		Message m = new Message("REMOVE " + key);
+		byte[] data =  m.sendAndReceive(dest);
+		return data;
+	}
+	
 	public void putInMemory(int key, byte[] data) {
 		this.getMemory().put(key, data);
 	}
 	
 	public byte[] getInMemory(int key) {
 		return this.getMemory().get(key);
+	}
+	
+	public byte[] removeInMemory(int key) {
+		return this.getMemory().remove(key);
 	}
 	 
 	

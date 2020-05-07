@@ -127,6 +127,25 @@ public class ChordMessageHandler implements Runnable {
 		            System.exit(-1);
 				}
 			}
+			else if(op.equals("REMOVE")) {
+				int key = Integer.parseInt(parts[1]);
+				Message m = new Message(buf);
+				m.getHeaderAndBody();
+				byte[] toSend = this.chord.removeInMemory(key);
+				if(toSend == null) {
+					toSend = new String("").getBytes();
+				}
+				try {
+					OutputStream out = socket.getOutputStream(); 
+				    DataOutputStream dos = new DataOutputStream(out);
+				    dos.writeInt(toSend.length);
+				    dos.write(toSend,0,toSend.length);
+				}catch(IOException e) {
+					System.err.println("Error sending message.");
+		            System.err.println(e);
+		            System.exit(-1);
+				}
+			}
 			else if(op.equals("GETDATA")) {
 				int key = Integer.parseInt(parts[1]);
 		    	String ip = parts[2];

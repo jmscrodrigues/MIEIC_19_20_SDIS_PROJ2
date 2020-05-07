@@ -23,15 +23,14 @@ public class Memory {
     }
 
     /*
-        Returns 0 on success, -1 on error
+        Returns data on success, null on error
     */
-    public int remove(int fileId) {
+    public byte[] remove(int fileId) {
         if (data.get(fileId) == null) {
-            return -1;
+            return null;
         }
 
-        data.remove(fileId);
-        return 0;
+        return data.remove(fileId);
     }
     
     public ConcurrentHashMap<Integer,byte[]> getData(){
