@@ -2,7 +2,7 @@ package Chord;
 
 import java.util.concurrent.TimeUnit;
 
-public class ChordStabilizer implements Runnable{
+public class ChordStabilizer implements Runnable {
 	
 	Chord chord;
 
@@ -13,14 +13,14 @@ public class ChordStabilizer implements Runnable{
 	@Override
 	public void run() {
 		
-		System.out.println("Running Stabilize");
+		System.out.println("Running Stabilizer...");
 		
 		this.chord.stabilize();
 		this.chord.fix_fingers();
 		
 		this.chord.printKnowns();
 		
-		this.chord.getPeer().getExecuter().schedule(this, Chord.UPDATE_TIME, TimeUnit.SECONDS);
+		this.chord.getPeer().getExecutor().schedule(this, Chord.UPDATE_TIME, TimeUnit.SECONDS);
 	}
 
 }

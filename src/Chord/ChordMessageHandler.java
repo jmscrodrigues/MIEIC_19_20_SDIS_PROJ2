@@ -2,15 +2,10 @@ package Chord;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-
 
 public class ChordMessageHandler implements Runnable {
-	
 	Chord chord;
 	Socket socket;
 	
@@ -21,152 +16,126 @@ public class ChordMessageHandler implements Runnable {
 
 	@Override
 	public void run() {
+		ChordMessage message = this.readSocket();
+
+		if (message == null)
+			return;
+
+		switch (message.op) {
+			case ChordOps.GET_SUCCESSOR: {
+				this.chord.find_successor(message.key, message.ip, message.port, -1);
+				break;
+			}
+			case ChordOps.FIND_FINGER: {
+				this.chord.find_successor(message.key, message.ip, message.port, message.index);
+				break;
+			}
+			case ChordOps.SET_FINGER: {
+				this.chord.setFinger(message.index, new InetSocketAddress(message.ip, message.port));
+				//System.out.println("SETFINGER_RECEIVED");
+				break;
+			}
+			case ChordOps.SET_SUCCESSOR: {
+				this.chord.setSuccessor(new InetSocketAddress(message.ip, message.port));
+				break;
+			}
+			case ChordOps.SET_PREDECCESSOR: {
+				this.chord.setPredecessor(new InetSocketAddress(message.ip, message.port));
+				break;
+			}
+			case ChordOps.NEW_FINGER: {
+				this.chord.foundNewFinger(new InetSocketAddress(message.ip, message.port));
+				this.chord.sendNotifyNewFinger(message.key, message.ip, message.port);
+				break;
+			}
+			case ChordOps.DELETE_FINGER: {
+				this.chord.deleteFinger(message.oldKey, new InetSocketAddress(message.ip, message.port));
+				this.chord.sendNotifyDeleteFinger(message.key, message.oldKey, message.ip, message.port);
+				break;
+			}
+			case ChordOps.LOOKUP: {
+				InetSocketAddress ret = this.chord.lookup(message.key);
+				this.writeToSocket("LOOKUPRET " + ret.getHostName() + " " + ret.getPort());
+				break;
+			}
+			case ChordOps.PUT: {
+				Message m = new Message(message.buf);
+				m.getHeaderAndBody();
+				this.chord.putInMemory(message.key, m.body);
+				break;
+			}
+			case ChordOps.GET: {
+				Message m = new Message(message.buf);
+				m.getHeaderAndBody();
+				byte[] toSend = this.chord.getInMemory(message.key);
+				if (toSend == null)
+					toSend = "".getBytes();
+
+				this.writeToSocket(toSend);
+				break;
+			}
+			case ChordOps.GET_DATA: {
+				this.chord.sendData(message.key, message.ip, message.port);
+				break;
+			}
+			case ChordOps.GET_PREDECCESSOR: {
+				InetSocketAddress pre = this.chord.getPredecessor();
+				//Message out = new Message("PREDECESSOR " + pre.getHostName() + " " + pre.getPort());
+				//out.sendMessage(socket);
+				System.out.println("Sending Predecessor");
+				writeToSocket("PREDECCESSOR " + pre.getHostName() + " " + pre.getPort());
+				break;
+			}
+			case ChordOps.NOTIFY: {
+				this.chord.notify(new InetSocketAddress(message.ip, message.port));
+				break;
+			}
+		}
+
 		try {
-			
-			InputStream in = socket.getInputStream();
-		    DataInputStream dis = new DataInputStream(in);
-		    int len = dis.readInt();
-		    byte[] buf = new byte[len];
-		    if (len > 0) {
-		        dis.readFully(buf);
-		    }
-		    
-		    String message = new String(buf, StandardCharsets.UTF_8);
-		    System.out.println(message);
-		    String[] parts = message.split(" ");
-		    
-		    String op = parts[0];
-		    
-		    if(op.equals("GETSUCCESSOR")) {
-		    	int key = Integer.parseInt(parts[1]);
-		    	String ip = parts[2];
-		    	int port = Integer.parseInt(parts[3]);
-		    	this.chord.find_successor(key,ip,port,-1);
-		    }
-		    else if(op.equals("FINDFINGER")) {
-		    	int key = Integer.parseInt(parts[1]);
-		    	String ip = parts[2];
-		    	int port = Integer.parseInt(parts[3]);
-		    	int index = Integer.parseInt(parts[4]);
-		    	this.chord.find_successor(key,ip,port,index);
-		    }
-		    else if(op.equals("SETFINGER")) {
-		    	int key = Integer.parseInt(parts[1]);
-		    	String ip = parts[2];
-		    	int port = Integer.parseInt(parts[3]);
-		    	int index = Integer.parseInt(parts[4]);
-		    	this.chord.setFinger(index, new InetSocketAddress(ip,port));
-		    	//System.out.println("SETFINGER_RECEIVED");
-		    }
-		    else if(op.equals("SETSUCCESSOR")) {
-		    	int key = Integer.parseInt(parts[1]);
-		    	String ip = parts[2];
-		    	int port = Integer.parseInt(parts[3]);
-		    	InetSocketAddress sucessor = new InetSocketAddress(ip,port);
-		    	this.chord.setSuccessor(sucessor);
-		    }
-		    else if(op.equals("SETPREDECCESSOR")) {
-		    	int key = Integer.parseInt(parts[1]);
-		    	String ip = parts[2];
-		    	int port = Integer.parseInt(parts[3]);
-		    	InetSocketAddress sucessor = new InetSocketAddress(ip,port);
-		    	this.chord.setPredeccessor(sucessor);
-		    }
-		    else if(op.equals("NEWFINGER")) {
-		    	int originKey = Integer.parseInt(parts[1]);
-		    	String ip = parts[2];
-		    	int port = Integer.parseInt(parts[3]);
-		    	this.chord.foundNewFinger(new InetSocketAddress(ip,port));
-		    	this.chord.sendNotifyNewFinger(originKey, ip, port);
-			}
-			else if (op.equals("DELETEFINGER")) {
-				int exitKey = Integer.parseInt(parts[1]);
-				int oldKey = Integer.parseInt(parts[2]);
-				String ip = parts[3];
-				int port = Integer.parseInt(parts[4]);
-				this.chord.deleteFinger(oldKey, new InetSocketAddress(ip,port));
-				this.chord.sendNotifyDeleteFinger(exitKey, oldKey, ip, port);
-			}
-			else if(op.equals("LOOKUP")) {
-				int key = Integer.parseInt(parts[1]);
-				InetSocketAddress ret = this.chord.lookup(key);
-				byte[] toSend = new String("LOOKUPRET " + ret.getHostName() + " " + ret.getPort()).getBytes();
-				try {
-					OutputStream out = socket.getOutputStream(); 
-				    DataOutputStream dos = new DataOutputStream(out);
-				    dos.writeInt(toSend.length);
-				    dos.write(toSend,0,toSend.length);
-				}catch(IOException e) {
-					System.err.println("Error sending message.");
-		            System.err.println(e);
-		            System.exit(-1);
-				}
-			}
-			else if(op.equals("PUT")) {
-				int key = Integer.parseInt(parts[1]);
-				Message m = new Message(buf);
-				m.getHeaderAndBody();
-				this.chord.putInMemory(key, m.body);
-			}
-			else if(op.equals("GET")) {
-				int key = Integer.parseInt(parts[1]);
-				Message m = new Message(buf);
-				m.getHeaderAndBody();
-				byte[] toSend = this.chord.getInMemory(key);
-				if(toSend == null) {
-					toSend = new String("").getBytes();
-				}
-				try {
-					OutputStream out = socket.getOutputStream(); 
-				    DataOutputStream dos = new DataOutputStream(out);
-				    dos.writeInt(toSend.length);
-				    dos.write(toSend,0,toSend.length);
-				}catch(IOException e) {
-					System.err.println("Error sending message.");
-		            System.err.println(e);
-		            System.exit(-1);
-				}
-			}
-			else if(op.equals("GETDATA")) {
-				int key = Integer.parseInt(parts[1]);
-		    	String ip = parts[2];
-		    	int port = Integer.parseInt(parts[3]);
-				this.chord.sendData(key,ip,port);
-			}
-		    else if(op.equals("GETPREDECCESSOR")) {
-		    	InetSocketAddress pre = this.chord.getPredeccessor();
-		    	//Message out = new Message("PREDECESSOR " + pre.getHostName() + " " + pre.getPort());
-		    	//out.sendMessage(socket);
-		    	byte[] toSend = new String("PREDECCESSOR " + pre.getHostName() + " " + pre.getPort()).getBytes();
-		    	System.out.println("Sending Predecessor");
-		    	if(toSend == null) {
-					toSend = new String("").getBytes();
-				}
-				try {
-					OutputStream out = socket.getOutputStream(); 
-				    DataOutputStream dos = new DataOutputStream(out);
-				    dos.writeInt(toSend.length);
-				    dos.write(toSend,0,toSend.length);
-				}catch(IOException e) {
-					System.err.println("Error sending message.");
-		            System.err.println(e);
-		            System.exit(-1);
-				}
-		    }
-		    else if(op.equals("NOTIFY")) {
-		    	int key = Integer.parseInt(parts[1]);
-		    	String ip = parts[2];
-		    	int port = Integer.parseInt(parts[3]);
-		    	this.chord.notify(new InetSocketAddress(ip, port));
-		    }
-		    
-		    socket.close();
-		    
-		    
-		}catch(IOException e) {
-			e.printStackTrace();
+			socket.close();
+		} catch (IOException e) {
+			System.err.print("Failed to close socket\n");
 		}
 
 	}
+
+	private ChordMessage readSocket() {
+		int len = 0;
+		byte[] buf = null;
+
+		try {
+			DataInputStream dis = new DataInputStream(socket.getInputStream());
+			len = dis.readInt();
+			buf = new byte[len];
+			if (len > 0) dis.readFully(buf);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		return new ChordMessage(buf);
+	}
+
+	private void writeToSocket(String message) {
+		this.writeToSocket(message.getBytes());
+	}
+
+	private void writeToSocket(byte[] message) {
+		try {
+			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+
+			dos.writeInt(message.length);
+			dos.write(message, 0, message.length);
+
+		} catch (IOException e) {
+			System.err.println("Error sending message.");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
+
+
 
 }
