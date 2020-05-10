@@ -112,8 +112,8 @@ public class ChordMessageHandler implements Runnable {
 	}
 
 	private ChordMessage readSocket() {
-		int len = 0;
-		byte[] buf = null;
+		int len;
+		byte[] buf;
 
 		try {
 			DataInputStream dis = new DataInputStream(socket.getInputStream());

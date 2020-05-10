@@ -16,6 +16,7 @@ public class Peer {
 
 	Peer(int server_port, int chord_port, InetSocketAddress access_peer) {
 
+		this.chord = new Chord(this, chord_port);
 		this.scheduler_executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
 
 		try {
@@ -23,35 +24,29 @@ public class Peer {
 		} catch (IOException e) {
 			System.err.println("Could not create the server socket");
 			e.printStackTrace();
+			System.exit(-1);
 		}
 
 		this.scheduler_executor.execute(new PeerServer(this));
-		this.chord = new Chord(this, chord_port);
 
 		if (access_peer != null)
 			this.chord.joinRing(access_peer);
 
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				chord.leaveRing();
-			}
-		});
+		Runtime.getRuntime().addShutdownHook(new Thread(chord::leaveRing));
 	}
 	
 	public String put(String key, String value) {
 		this.chord.put(key, value.getBytes());
-		return "Inserted with sucess";
+		return "Inserted with success";
 	}
 	
 	public String get(String key) {
 		byte[] ret = this.chord.get(key);
-		String value = new String(ret, StandardCharsets.UTF_8);
-		return value;
+		return new String(ret, StandardCharsets.UTF_8);
 	}
 	public String remove(String key) {
 		byte[] ret = this.chord.remove(key);
-		String value = new String(ret, StandardCharsets.UTF_8);
-		return value;
+		return new String(ret, StandardCharsets.UTF_8);
 	}
 	
 	public ServerSocket getServerSocket() {

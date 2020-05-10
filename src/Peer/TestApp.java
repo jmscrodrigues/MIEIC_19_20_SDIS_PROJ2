@@ -26,13 +26,13 @@ public class TestApp {
 			socket = new Socket(ip, port);
         } catch (IOException e) {
             System.err.println("Could not connect to peer");
-            System.err.println(e);
+            e.printStackTrace();
             System.exit(-1);
         }
 		
 		String op = args[1];
 		
-		String toSend = null;
+		String toSend;
 
 		switch (op) {
 			case "PUT": {
@@ -50,6 +50,10 @@ public class TestApp {
 				String key = args[2];
 				toSend = "REMOVE " + key;
 				break;
+			}
+			default: {
+				System.out.print("Not a valid operation\n");
+				return;
 			}
 		}
 		
@@ -75,11 +79,9 @@ public class TestApp {
 		        dis.readFully(buf);
 		    }
 		    socket.close();
-		}catch(IOException e) {
+		} catch(IOException e) {
             e.printStackTrace();
 			System.err.println("Error reading message!");
-            System.err.println(e);
-            e.printStackTrace();
             System.exit(-1);
 		}
 		

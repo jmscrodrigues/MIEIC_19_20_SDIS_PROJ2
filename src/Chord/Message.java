@@ -36,16 +36,16 @@ public class Message {
 	
 	public void getHeaderAndBody() {
 		byte[] buf = data;
-		for(int i = 0; i <= buf.length - 4 ; ++i) {
-			if(buf[i] == 0xD && buf[i+1] == 0xA && buf[i+2] == 0xD && buf[i+3] == 0xA) {
+		for (int i = 0; i <= buf.length - 4 ; ++i) {
+			if (buf[i] == 0xD && buf[i+1] == 0xA && buf[i+2] == 0xD && buf[i+3] == 0xA) {
 				header = Arrays.copyOf(buf, i);
-				body = Arrays.copyOfRange(buf,i+4,buf.length);
+				body = Arrays.copyOfRange(buf, i+4, buf.length);
 				break;
 			}
 		}
 	}
 	public void sendMessage(InetSocketAddress addrss) {
-		this.sendMessage(addrss.getHostName(),addrss.getPort());
+		this.sendMessage(addrss.getHostName(), addrss.getPort());
 	}
 	
 	public void sendMessage(Socket socket) {	
@@ -81,7 +81,7 @@ public class Message {
 		    dos.writeInt(message.length);
 		    dos.write(message,0,message.length);
 		    socket.close();
-		}catch(IOException e) {
+		} catch(IOException e) {
 			System.err.println("Error sending message.");
             System.err.println(e);
             e.printStackTrace();
@@ -109,12 +109,13 @@ public class Message {
 		    DataOutputStream dos = new DataOutputStream(out);
 		    dos.writeInt(message.length);
 		    dos.write(message,0,message.length);
-		}catch(IOException e) {
+		} catch(IOException e) {
 			System.err.println("Error sending message.");
             System.err.println(e);
             e.printStackTrace();
             System.exit(-1);
 		}
+
 		byte[] buf = null;
 		try {
 			InputStream in = socket.getInputStream();
@@ -125,7 +126,7 @@ public class Message {
 		        dis.readFully(buf);
 		    }
 		    socket.close();
-		}catch(IOException e) {
+		} catch(IOException e) {
             e.printStackTrace();
 			System.err.println("Error reading message!");
             System.err.println(e);
@@ -141,6 +142,4 @@ public class Message {
 	    String[] parts = received.split(" ");
 	    return new InetSocketAddress(parts[1],Integer.parseInt(parts[2]));
 	}
-
-	
 }
