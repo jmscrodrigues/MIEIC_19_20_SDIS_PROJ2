@@ -56,17 +56,17 @@ public class Peer {
 		
 	}
 	
-	public String put(String key, String value) {
+	public String put(String key, String value) throws Exception {
 		this.chord.put(key, value.getBytes());
 		return "Inserted with sucess";
 	}
 	
-	public String get(String key) {
+	public String get(String key) throws Exception {
 		byte[] ret = this.chord.get(key);
 		String value = new String(ret, StandardCharsets.UTF_8);
 		return value;
 	}
-	public String remove(String key) {
+	public String remove(String key) throws Exception {
 		byte[] ret = this.chord.remove(key);
 		String value = new String(ret, StandardCharsets.UTF_8);
 		return value;

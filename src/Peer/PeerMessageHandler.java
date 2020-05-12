@@ -46,14 +46,29 @@ public class PeerMessageHandler implements Runnable{
 	    if(op.equals("PUT")) {
 	    	String key = parts[1];
 	    	String value = parts[2];
-	    	this.peer.put(key, value);
+	    	try {
+				this.peer.put(key, value);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	    	toSend = new String("Put with sucess").getBytes();
 	    }else if(op.equals("GET")) {
 	    	String key = parts[1];
-	    	toSend = this.peer.get(key).getBytes();
+	    	try {
+				toSend = this.peer.get(key).getBytes();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	    }else if(op.equals("REMOVE")) {
 	    	String key = parts[1];
-	    	toSend = this.peer.remove(key).getBytes();
+	    	try {
+				toSend = this.peer.remove(key).getBytes();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	    }
 	    
 	    try {

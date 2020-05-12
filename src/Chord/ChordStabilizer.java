@@ -16,7 +16,12 @@ public class ChordStabilizer implements Runnable{
 		System.out.println("Running Stabilize");
 		
 		this.chord.stabilize();
-		this.chord.fix_fingers();
+		try {
+			this.chord.fix_fingers();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		this.chord.printKnowns();
 		

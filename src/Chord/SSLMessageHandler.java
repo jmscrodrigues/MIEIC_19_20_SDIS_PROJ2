@@ -29,7 +29,7 @@ public class SSLMessageHandler implements Runnable{
 		byte [] toSend = new byte[0];
 		
 		String message = new String(data, StandardCharsets.UTF_8);
-	    System.out.println(message);
+	    System.out.println("TO HANDLE " + message);
 	    String[] parts = message.split(" ");
 	    String op = parts[0];
 		

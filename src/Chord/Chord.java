@@ -151,7 +151,7 @@ public class Chord {
 	 * @throws Exception 
 	 */
 	public void find_successor(int key, String ip, int port, int type) throws Exception { 
-		
+		System.out.println("a");
 		//se nao existir sucessor, significa que é o unico na rede
 		if(this.successor == null) {
 			if(type == -1) { // se for um lookup do successor
