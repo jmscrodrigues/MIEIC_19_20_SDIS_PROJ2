@@ -138,7 +138,7 @@ public class SSLServer extends SSLBase{
                 while (send_encryptedData.hasRemaining()) {
                     sC.write(send_encryptedData);
                 }
-                System.out.println("Message sent: " + msg);
+                System.out.println("Message sent: " + new String(msg));
                 break;
             case BUFFER_OVERFLOW:
             send_encryptedData = enlargePacketBuffer(eng, send_encryptedData);

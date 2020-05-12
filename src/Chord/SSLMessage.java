@@ -45,14 +45,16 @@ public class SSLMessage extends SSLBase {
         rcv_plainData = ByteBuffer.allocate(1024);
         rcv_encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
         
-        this.connect();
-        
     }
 
     public boolean connect() throws Exception {
     	socketChannel = SocketChannel.open();
     	socketChannel.configureBlocking(false);
     	socketChannel.connect(new InetSocketAddress(this.ip, this.port));
+    	
+    	while (!socketChannel.finishConnect()) {
+    		// can do something here...
+    	}
 
     	engine.beginHandshake();
     	return doHandshake(socketChannel, engine);
