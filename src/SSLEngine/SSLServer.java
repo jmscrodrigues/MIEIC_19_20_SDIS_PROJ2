@@ -18,7 +18,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
 
-public abstract class SSLServer extends SSLPeer {
+public class SSLServer extends SSLPeer {
 	
 
 	private boolean active;

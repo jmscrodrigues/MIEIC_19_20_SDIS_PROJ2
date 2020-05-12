@@ -1,15 +1,15 @@
 package SSLEngine;
 
-import SSL.NioSSLServer;
+
 
 public class ServerThread implements Runnable {
 
-	NioSSLServer server;
+	SSLServer server;
 	
 	@Override
 	public void run() {
 		try {
-			server = new NioSSLServer("TLSv1.2", "localhost", 9222);
+			server = new  SSLServer("TLSv1.2", "localhost", 9222);
 			server.start();
 		} catch (Exception e) {
 			e.printStackTrace();
