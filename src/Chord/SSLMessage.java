@@ -27,8 +27,11 @@ public class SSLMessage extends SSLBase {
     private SSLEngine engine;
 
     private SocketChannel socketChannel;
-
-
+    
+    public SSLMessage(InetSocketAddress address) throws Exception {
+    	this(address.getHostName(),address.getPort());
+    }
+    
     public SSLMessage(String ip, int port) throws Exception  {
     	this.ip = ip;
     	this.port = port;
@@ -46,9 +49,11 @@ public class SSLMessage extends SSLBase {
         rcv_plainData = ByteBuffer.allocate(1024);
         rcv_encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
         
+        this.connect();
+        
     }
 
-    public boolean connect() throws Exception {
+    private boolean connect() throws Exception {
     	socketChannel = SocketChannel.open();
     	socketChannel.configureBlocking(false);
     	socketChannel.connect(new InetSocketAddress(this.ip, this.port));
@@ -72,7 +77,7 @@ public class SSLMessage extends SSLBase {
     @Override
     protected void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws IOException {
 
-        //System.out.println("Writting to server");
+    	if(debug) System.out.println("Writting to server");
 
         send_plainData.clear();
         send_plainData.put(message);
@@ -109,9 +114,11 @@ public class SSLMessage extends SSLBase {
     }
 
     @Override
-    protected void read(SocketChannel socketChannel, SSLEngine engine) throws Exception  {
+    protected byte[] read(SocketChannel socketChannel, SSLEngine engine) throws Exception  {
 
-        //System.out.println("Readding from server");
+    	if(debug) System.out.println("Reading from server");
+    	
+    	byte[] data = null;
 
         rcv_encryptedData.clear();
         int timeout = 50;
@@ -126,7 +133,8 @@ public class SSLMessage extends SSLBase {
                     switch (res.getStatus()) {
                     case OK:
                     	rcv_plainData.flip();
-                        System.out.println("Message: " + new String(Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced())));
+                    	data = Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced());
+                        System.out.println("Message: " + new String(data));
                         exit = true;
                         break;
                     case BUFFER_OVERFLOW:
@@ -137,24 +145,25 @@ public class SSLMessage extends SSLBase {
                         break;
                     case CLOSED:
                         closeConnection(socketChannel, engine);
-                        return;
+                        return null;
                     default:
                         throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
                     }
                 }
             } else if (bytesRead < 0) {
                 handleEndOfStream(socketChannel, engine);
-                return;
+                return null;
             }
             Thread.sleep(timeout);
         }
+        return data;
     }
 
     public void close() throws IOException {
-    	System.out.println("About to close connection with the server...");
+    	if(debug) System.out.println("About to close connection with the server...");
         closeConnection(socketChannel, engine);
         executor.shutdown();
-        System.out.println("Goodbye!");
+        if(debug) System.out.println("Goodbye!");
     }
 
 }

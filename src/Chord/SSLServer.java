@@ -25,7 +25,7 @@ import java.util.Iterator;
 public class SSLServer extends SSLBase{
     private boolean serverActive;
     private SSLContext context =  SSLContext.getInstance("TLS");
-    private Selector selector;
+    protected Selector selector;
 
     public SSLServer(String hostAddress, int port) throws Exception { 
 
@@ -54,7 +54,7 @@ public class SSLServer extends SSLBase{
 
     public void start() throws Exception {
 
-    	System.out.println("SSLServer initialized");
+    	if(debug) System.out.println("SSLServer initialized");
 
         while (isServerActive()) {
             selector.select();
@@ -73,14 +73,14 @@ public class SSLServer extends SSLBase{
             }
         }
         
-        System.out.println("Goodbye!");
+        if(debug) System.out.println("Goodbye!");
     }
 
     @Override
-    protected void read(SocketChannel sC, SSLEngine eng) throws IOException {
+    protected synchronized byte[] read(SocketChannel sC, SSLEngine eng) throws IOException {
 
-        //System.out.println("Will read from a client");
-
+    	if(debug) System.out.println("Will read from a client");
+    	byte[] data = null;
         rcv_encryptedData.clear();
         int bytesRead = sC.read(rcv_encryptedData);
         if (bytesRead > 0) {
@@ -91,7 +91,8 @@ public class SSLServer extends SSLBase{
                 switch (res.getStatus()) {
                 case OK:
                     rcv_plainData.flip();
-                    System.out.println("Message: " + new String(Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced())));
+                    data = Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced()); 
+                    System.out.println("Message: " + new String(data));
                     break;
                 case BUFFER_OVERFLOW:
                     rcv_plainData = enlargeApplicationBuffer(eng, rcv_plainData);
@@ -100,21 +101,22 @@ public class SSLServer extends SSLBase{
                 rcv_encryptedData = handleBufferUnderflow(eng, rcv_encryptedData);
                     break;
                 case CLOSED:
-                    System.out.println("Client wants to close connection");
+                	if(debug) System.out.println("Client wants to close connection");
                     closeConnection(sC, eng);
-                    System.out.println("Connection closed");
-                    return;
+                    if(debug) System.out.println("Connection closed");
+                    return null;
                 default:
                     throw new IllegalStateException("Status is not valid: " + res.getStatus());
                 }
             }
 
-            write(sC, eng, "Hello! I am your server!");
+            //write(sC, eng, "Hello! I am your server!");
 
         } else if (bytesRead < 0) {
             handleEndOfStream(sC, eng);
-            //System.out.println("Goodbye client!");
+            if(debug) System.out.println("Goodbye client!");
         }
+        return data;
     }
 
     public void write(SocketChannel sC, SSLEngine eng, String message) throws IOException {
@@ -123,9 +125,9 @@ public class SSLServer extends SSLBase{
     
 
     @Override
-    protected void write(SocketChannel sC, SSLEngine eng, byte[] msg) throws IOException {
+    protected synchronized  void write(SocketChannel sC, SSLEngine eng, byte[] msg) throws IOException {
 
-        //System.out.println("Will write to a client");
+    	if(debug) System.out.println("Will write to a client");
 
         send_plainData.clear();
         send_plainData.put(msg);
@@ -156,19 +158,19 @@ public class SSLServer extends SSLBase{
     }
 
     public void stop() {
-    	System.out.println("Server closing");
+    	if(debug) System.out.println("Server closing");
     	serverActive = false;
     	executor.shutdown();
     	selector.wakeup();
     }
 
-    private boolean isServerActive() {
+    protected boolean isServerActive() {
         return serverActive;
     }
 
-    private void accept(SelectionKey k) throws Exception {
+    protected void accept(SelectionKey k) throws Exception {
 
-    	//System.out.println("Connection request!");
+    	if(debug) System.out.println("Connection request!");
 
         SocketChannel socketChannel = ((ServerSocketChannel) k.channel()).accept();
         socketChannel.configureBlocking(false);
@@ -181,7 +183,7 @@ public class SSLServer extends SSLBase{
             socketChannel.register(selector, SelectionKey.OP_READ, engine);
         } else {
             socketChannel.close();
-            System.out.println("Connection closed due to handshake failure.");
+            if(debug) System.out.println("Connection closed due to handshake failure.");
         }
     }
 

@@ -182,7 +182,7 @@ public class ChordMessageHandler implements Runnable {
 		    socket.close();
 		    
 		    
-		}catch(IOException e) {
+		}catch(Exception e) {
 			e.printStackTrace();
 		}
 

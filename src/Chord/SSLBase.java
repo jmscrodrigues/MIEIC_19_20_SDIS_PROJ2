@@ -30,13 +30,19 @@ public abstract class SSLBase {
 
     protected ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    protected abstract void read(SocketChannel socketChannel, SSLEngine engine) throws Exception;
+    protected abstract byte[] read(SocketChannel socketChannel, SSLEngine engine) throws Exception;
 
     protected abstract void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws Exception;
+    
+    protected boolean debug = false;;
+    
+    public void setDebug(boolean b) {
+    	this.debug = b;
+    }
 
     protected boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws IOException {
 
-        //System.out.println("Going to do handshake...");
+        if(debug) System.out.println("Going to do handshake...");
 
         SSLEngineResult result;
         HandshakeStatus handshakeStatus;
@@ -58,7 +64,7 @@ public abstract class SSLBase {
                     try {
                         engine.closeInbound();
                     } catch (SSLException e) {
-                        System.out.println("This engine was forced to close inbound, without having received the proper SSL/TLS close notification message from the peer, due to end of stream.");
+                    	if(debug) System.out.println("This engine was forced to close inbound, without having received the proper SSL/TLS close notification message from the peer, due to end of stream.");
                     }
                     engine.closeOutbound();
                     
@@ -71,7 +77,7 @@ public abstract class SSLBase {
                     rcv_encryptedData.compact();
                     handshakeStatus = result.getHandshakeStatus();
                 } catch (SSLException sslException) {
-                	System.out.println("A problem was encountered while processing the data that caused the SSLEngine to abort. Will try to properly close connection...");
+                	if(debug) System.out.println("A problem was encountered while processing the data that caused the SSLEngine to abort. Will try to properly close connection...");
                     engine.closeOutbound();
                     handshakeStatus = engine.getHandshakeStatus();
                     break;
@@ -105,7 +111,7 @@ public abstract class SSLBase {
                     result = engine.wrap(send_plainData, send_encryptedData);
                     handshakeStatus = result.getHandshakeStatus();
                 } catch (SSLException sslException) {
-                	System.out.println("A problem was encountered while processing the data that caused the SSLEngine to abort. Will try to properly close connection...");
+                	if(debug) System.out.println("A problem was encountered while processing the data that caused the SSLEngine to abort. Will try to properly close connection...");
                     engine.closeOutbound();
                     handshakeStatus = engine.getHandshakeStatus();
                     break;
@@ -132,7 +138,7 @@ public abstract class SSLBase {
                         
                         rcv_encryptedData.clear();
                     } catch (Exception e) {
-                    	System.out.println("Failed to send server's CLOSE message due to socket channel's failure.");
+                    	if(debug) System.out.println("Failed to send server's CLOSE message due to socket channel's failure.");
                         handshakeStatus = engine.getHandshakeStatus();
                     }
                     break;
@@ -199,7 +205,7 @@ public abstract class SSLBase {
         try {
             engine.closeInbound();
         } catch (Exception e) {
-        	System.out.println("This engine was forced to close inbound, without having received the proper SSL/TLS close notification message from the peer, due to end of stream.");
+        	if(debug) System.out.println("This engine was forced to close inbound, without having received the proper SSL/TLS close notification message from the peer, due to end of stream.");
         }
         closeConnection(socketChannel, engine);
     }

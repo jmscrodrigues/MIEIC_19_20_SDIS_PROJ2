@@ -1,27 +1,60 @@
 package Chord;
 
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+import java.util.Iterator;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-public class ServerThread implements Runnable {
+import javax.net.ssl.SSLEngine;
+
+public class ServerThread extends SSLServer implements Runnable {
 
 	Chord chord;
-	SSLServer server;
 	
-	ServerThread(Chord c){
+	ServerThread(Chord c, String hostAddress, int port) throws Exception{
+		super(hostAddress,port);
 		this.chord = c;
-		server = this.chord.sllServer;
+		this.setDebug(true);
 	}
+	
+	@Override
+    public void start() throws Exception {
+		
+		ScheduledThreadPoolExecutor scheduler_executer = this.chord.getPeer().getExecuter();
+
+    	if(debug) System.out.println("SSLServer initialized");
+
+        while (isServerActive()) {
+            selector.select();
+            Iterator<SelectionKey> selected = selector.selectedKeys().iterator();
+            while (selected.hasNext()) {
+                SelectionKey k = selected.next();
+                selected.remove();
+                if (!k.isValid()) {
+                    continue;
+                }
+                if (k.isAcceptable()) {
+                    accept(k);
+                } else if (k.isReadable()) {
+                	SocketChannel sc = (SocketChannel) k.channel();
+                	SSLEngine eng = (SSLEngine) k.attachment();
+                    scheduler_executer.execute(new SSLMessageHandler(this,this.chord,sc,eng,read(sc, eng)));
+                	//read(sc, eng);
+                	//write(sc, eng, "Hello! I am your server!");
+                }
+            }
+        }
+        
+        if(debug) System.out.println("Goodbye!");
+    }
 	
 	@Override
 	public void run() {
 		try {
-			server.start();
+			this.start();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public void stop() {
-		server.stop();
 	}
 	
 }

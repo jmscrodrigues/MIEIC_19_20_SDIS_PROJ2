@@ -1,5 +1,6 @@
 package Chord;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
@@ -47,9 +48,7 @@ public class Chord {
 		this.peer = p;
         this.port = port;
         try {
-            //serverSocket = new ServerSocket(port);
-        	//this.server = new ChordSSLServer(this,"TLSv1.2","localhost",port);
-        	this.sllServer = new SSLServer("localhost",port);
+        	this.peer.getExecuter().execute(new ServerThread(this,"localhost",port));
         } catch (Exception e) {
             System.err.println("Could not create the server");
             e.printStackTrace();
@@ -59,8 +58,6 @@ public class Chord {
         this.predeccessor = null;
         this.key = this.hash(selfAddress);
         
-        this.peer.getExecuter().execute(new ServerThread(this));
-        //this.peer.getExecuter().execute(new ChrodThread(this));
         
         /*this.getPeer().getExecuter().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
         */
@@ -69,28 +66,17 @@ public class Chord {
     }
 	
 	
-	public void joinRing(InetSocketAddress peer) {
+	public void joinRing(InetSocketAddress peer) throws Exception {
 		this.access_peer = peer;
 		
 		System.out.println("Started join process");
 		
-		for(int i = 0; i < 5000; i++) {
-			try {
-				SSLMessage message = new SSLMessage(this.access_peer.getHostName(),this.access_peer.getPort());
-				message.connect();
-				message.write("ola " + this.port + " " + i);
-				message.read();
-				
-				message.close();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+		String data = "GETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
+		SSLMessage m = new SSLMessage(this.access_peer);
+		m.write(data);
+		m.read();
+		m.close();
 		
-		/*String data = "GETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
-		SSLMessage m = new SSLMessage(peer,data);
-		m.sendMessageAndRead();*/
 		/*String data = "LOOKUP " + this.key;
 		SSLMessage m = new SSLMessage(peer.getHostName(),peer.getPort(),data);
 		String [] parts = new String(m.sendMessageAndRead()).split(" ");
@@ -119,7 +105,7 @@ public class Chord {
 		
 	}
 	
-	public void leaveRing() {
+	public void leaveRing() throws Exception {
 		System.out.println("Started leaving process");
 		
 		if(this.successor != null && this.predeccessor != null) {
@@ -136,11 +122,15 @@ public class Chord {
 			
 			System.out.println("Transfering data to sucessor done");
 			*/
-			/*SSLMessage m = new SSLMessage(this.successor,"SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
-			m.sendMessageAndRead();
+			SSLMessage m = new SSLMessage(this.successor);
+			m.write("SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
+			m.read();
+			m.close();
 			
-			m = new SSLMessage(this.predeccessor,"SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
-			m.sendMessageAndRead();*/
+			m = new SSLMessage(this.predeccessor);
+			m.write("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
+			m.read();
+			m.close();
 			
 			/*m = new SSLMessage("DELETEFINGER " + this.hash(predeccessor) + " " + this.key + " " + this.successor.getHostName() + " " +  this.successor.getPort() );
 			m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());*/
@@ -156,41 +146,48 @@ public class Chord {
 	 * @param key Key of node joining
 	 * @param ip Its ip
 	 * @param port Its port
-	 * @param type: -1: Node joining  >=0: Updating fingerTable of index type
+	 * @param type: -1-> Node joining  >=0: Updating fingerTable of index type
+	 * @throws Exception 
 	 */
-	public void find_successor(int key, String ip, int port, int type) { 
+	public void find_successor(int key, String ip, int port, int type) throws Exception { 
 		
 		//se nao existir sucessor, significa que é o unico na rede
 		if(this.successor == null) {
 			if(type == -1) { // se for um lookup do successor
-				/*InetSocketAddress new_peer = new InetSocketAddress(ip,port);
+				InetSocketAddress new_peer = new InetSocketAddress(ip,port);
 				this.setPredeccessor(new_peer);
-				SSLMessage m = new SSLMessage(ip, port,"SETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		m.sendMessageAndRead();
-	    		
+				SSLMessage m = new SSLMessage(this.predeccessor);
 				this.setSuccessor(new_peer);
-	    		m = new SSLMessage(ip, port,"SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		m.sendMessageAndRead();
-	    		this.populateFingerTable(new_peer);*/
+	    		m.write("SETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+	    		m.read();
+	    		m.write("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+	    		m.read();
+	    		m.close();
+	    		this.populateFingerTable(new_peer);
 			}
 			return;
 		}
 		//se a chave que se procura estiver entre mim e o meu sucessor, logo deu hit!
 		if(this.betweenOpenClose(this.key, this.hash(successor), key)) {
 			if(type == -1) { // se for um lookup do successor
-				/*SSLMessage m = new SSLMessage(this.successor,"SETPREDECCESSOR " + key + " " + ip + " " +  port);
-	    		m.sendMessageAndRead();
+				SSLMessage m = new SSLMessage(this.successor);
+	    		m.write("SETPREDECCESSOR " + key + " " + ip + " " +  port);
+	    		m.read();
+	    		m.close();
 				
-	    		m = new SSLMessage(ip, port,"SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
-	    		m.sendMessageAndRead();
+	    		m = new SSLMessage(ip, port);
+	    		m.write("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
+	    		m.read();
 				
 	    		InetSocketAddress newFinger = new InetSocketAddress(ip,port);
 				this.setSuccessor(newFinger);
-				m = new SSLMessage(ip, port,"SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		m.sendMessageAndRead();
+				m = new SSLMessage(ip, port);
+	    		m.write("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+	    		m.read();
+	    		m.close();
 	    		
 	    		//novo sucessor encontrado, por isso mudar os fingers
-	    		this.foundNewFinger(newFinger);
+	    		/*this.foundNewFinger(newFinger);
 	    		this.sendNotifyNewFinger(this.key,ip,port);*/
 	    		
 			}else { // se for uma procura de um finger
@@ -199,16 +196,18 @@ public class Chord {
 			}
     		return;
 		}else { //se a chave estiver para la do sucessor
-			/*InetSocketAddress closest = closest_preceding_node(key);
+			InetSocketAddress closest = closest_preceding_node(key);
 			System.out.println("Closest to " + key + " is:  " + closest);
 			if(type == -1) { // se for um lookup do successor
 				String data = "GETSUCCESSOR " + key + " " + ip + " " +  port;
-				SSLMessage m = new SSLMessage(closest,data);
-				m.sendMessageAndRead();
+				SSLMessage m = new SSLMessage(closest);
+				m.write(data);
+				m.read();
+				m.close();
 			}else { // se for uma prucura de finger
-				SSLMessage m = new SSLMessage(closest,"FINDFINGER " + key + " " + ip + " " +  port + " " + type);
-	    		m.sendMessageAndRead();
-			}*/
+				/*SSLMessage m = new SSLMessage(closest,"FINDFINGER " + key + " " + ip + " " +  port + " " + type);
+	    		m.sendMessageAndRead();*/
+			}
 
 		}
 	}
