@@ -32,11 +32,11 @@ public abstract class SLLBase {
 
     protected abstract void read(SocketChannel socketChannel, SSLEngine engine) throws Exception;
 
-    protected abstract void write(SocketChannel socketChannel, SSLEngine engine, String message) throws Exception;
+    protected abstract void write(SocketChannel socketChannel, SSLEngine engine, byte [] message) throws Exception;
 
     protected boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws IOException {
 
-        System.out.println("Going to do handshake...");
+        System.out.println("Doing handshake...");
 
         SSLEngineResult result;
         HandshakeStatus handshakeStatus;
