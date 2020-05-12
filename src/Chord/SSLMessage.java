@@ -16,7 +16,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 
 
-public class SSLMessage extends SLLBase {
+public class SSLMessage extends SSLBase {
 	
 	
 	private String ip;
