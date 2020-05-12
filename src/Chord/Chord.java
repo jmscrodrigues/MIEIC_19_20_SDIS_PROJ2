@@ -1,6 +1,5 @@
 package Chord;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
@@ -10,12 +9,9 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import Peer.Peer;
-import SSLEngine.SSLMessage;
-import javafx.util.Pair;
 
 
 public class Chord {
@@ -31,8 +27,6 @@ public class Chord {
 	private InetSocketAddress access_peer;
 	
 	private ServerSocket serverSocket;
-	
-	private ChordSSLServer server;
 	
 	private ConcurrentHashMap<Integer,InetSocketAddress> fingerTable = new ConcurrentHashMap<>();
 	
@@ -52,7 +46,7 @@ public class Chord {
         this.port = port;
         try {
             //serverSocket = new ServerSocket(port);
-        	this.server = new ChordSSLServer(this,"TLSv1.2","localhost",port);
+        	//this.server = new ChordSSLServer(this,"TLSv1.2","localhost",port);
         } catch (Exception e) {
             System.err.println("Could not create the server");
             e.printStackTrace();
@@ -62,7 +56,7 @@ public class Chord {
         this.predeccessor = null;
         this.key = this.hash(selfAddress);
         
-        this.peer.getExecuter().execute(this.server);
+        //this.peer.getExecuter().execute(this.server);
         //this.peer.getExecuter().execute(new ChrodThread(this));
         
         /*this.getPeer().getExecuter().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
@@ -77,9 +71,9 @@ public class Chord {
 		
 		System.out.println("Started join process");
 		
-		String data = "GETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
+		/*String data = "GETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
 		SSLMessage m = new SSLMessage(peer,data);
-		m.sendMessage();
+		m.sendMessageAndRead();*/
 		/*String data = "LOOKUP " + this.key;
 		SSLMessage m = new SSLMessage(peer.getHostName(),peer.getPort(),data);
 		String [] parts = new String(m.sendMessageAndRead()).split(" ");
@@ -125,11 +119,11 @@ public class Chord {
 			
 			System.out.println("Transfering data to sucessor done");
 			*/
-			SSLMessage m = new SSLMessage(this.successor,"SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
-			m.sendMessage();
+			/*SSLMessage m = new SSLMessage(this.successor,"SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
+			m.sendMessageAndRead();
 			
 			m = new SSLMessage(this.predeccessor,"SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
-			m.sendMessage();
+			m.sendMessageAndRead();*/
 			
 			/*m = new SSLMessage("DELETEFINGER " + this.hash(predeccessor) + " " + this.key + " " + this.successor.getHostName() + " " +  this.successor.getPort() );
 			m.sendMessage(this.predeccessor.getHostName(), this.predeccessor.getPort());*/
@@ -152,52 +146,52 @@ public class Chord {
 		//se nao existir sucessor, significa que é o unico na rede
 		if(this.successor == null) {
 			if(type == -1) { // se for um lookup do successor
-				InetSocketAddress new_peer = new InetSocketAddress(ip,port);
+				/*InetSocketAddress new_peer = new InetSocketAddress(ip,port);
 				this.setPredeccessor(new_peer);
 				SSLMessage m = new SSLMessage(ip, port,"SETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		m.sendMessage();
+	    		m.sendMessageAndRead();
 	    		
 				this.setSuccessor(new_peer);
 	    		m = new SSLMessage(ip, port,"SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		m.sendMessage();
-	    		this.populateFingerTable(new_peer);
+	    		m.sendMessageAndRead();
+	    		this.populateFingerTable(new_peer);*/
 			}
 			return;
 		}
 		//se a chave que se procura estiver entre mim e o meu sucessor, logo deu hit!
 		if(this.betweenOpenClose(this.key, this.hash(successor), key)) {
 			if(type == -1) { // se for um lookup do successor
-				SSLMessage m = new SSLMessage(this.successor,"SETPREDECCESSOR " + key + " " + ip + " " +  port);
-	    		m.sendMessage();
+				/*SSLMessage m = new SSLMessage(this.successor,"SETPREDECCESSOR " + key + " " + ip + " " +  port);
+	    		m.sendMessageAndRead();
 				
 	    		m = new SSLMessage(ip, port,"SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
-	    		m.sendMessage();
+	    		m.sendMessageAndRead();
 				
 	    		InetSocketAddress newFinger = new InetSocketAddress(ip,port);
 				this.setSuccessor(newFinger);
 				m = new SSLMessage(ip, port,"SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		m.sendMessage();
+	    		m.sendMessageAndRead();
 	    		
 	    		//novo sucessor encontrado, por isso mudar os fingers
 	    		this.foundNewFinger(newFinger);
-	    		this.sendNotifyNewFinger(this.key,ip,port);
+	    		this.sendNotifyNewFinger(this.key,ip,port);*/
 	    		
 			}else { // se for uma procura de um finger
-				SSLMessage m = new SSLMessage(ip, port,"SETFINGER " + this.hash(this.successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort() + " " + type);
-	    		m.sendMessage();
+				/*SSLMessage m = new SSLMessage(ip, port,"SETFINGER " + this.hash(this.successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort() + " " + type);
+	    		m.sendMessageAndRead();*/
 			}
     		return;
 		}else { //se a chave estiver para la do sucessor
-			InetSocketAddress closest = closest_preceding_node(key);
+			/*InetSocketAddress closest = closest_preceding_node(key);
 			System.out.println("Closest to " + key + " is:  " + closest);
 			if(type == -1) { // se for um lookup do successor
 				String data = "GETSUCCESSOR " + key + " " + ip + " " +  port;
 				SSLMessage m = new SSLMessage(closest,data);
-				m.sendMessage();
+				m.sendMessageAndRead();
 			}else { // se for uma prucura de finger
 				SSLMessage m = new SSLMessage(closest,"FINDFINGER " + key + " " + ip + " " +  port + " " + type);
-	    		m.sendMessage();
-			}
+	    		m.sendMessageAndRead();
+			}*/
 
 		}
 	}
@@ -215,9 +209,9 @@ public class Chord {
 		}else {
 			InetSocketAddress closest = closest_preceding_node(key);
 			//Message m = new Message("LOOKUP " + key);
-			SSLMessage m = new SSLMessage(closest.getHostName(), closest.getPort(),"LOOKUP " + key);
+			/*SSLMessage m = new SSLMessage(closest.getHostName(), closest.getPort(),"LOOKUP " + key);
     		String [] parts = new String(m.sendMessageAndRead()).split(" ");
-    		ret = new InetSocketAddress(parts[3],Integer.parseInt(parts[4].replaceAll("\\D", "")));
+    		ret = new InetSocketAddress(parts[3],Integer.parseInt(parts[4].replaceAll("\\D", "")));*/
 		}
 		
 		return ret;
