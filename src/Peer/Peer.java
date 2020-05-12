@@ -1,4 +1,5 @@
 package Peer;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -11,38 +12,44 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import Chord.Chord;
 
 public class Peer {
-	
+
 	private Chord chord;
-    private ScheduledThreadPoolExecutor scheduler_executer;
-    
-    private ServerSocket serverSocket;
-	
+	private ScheduledThreadPoolExecutor scheduler_executer;
+
+	private ServerSocket serverSocket;
+
 	Peer(int server_port, int chord_port, InetSocketAddress access_peer) {
-		
-		
+
 		this.scheduler_executer = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
-		
+
 		try {
-            serverSocket = new ServerSocket(server_port);
-        } catch (IOException e) {
-            System.err.println("Could not create the server socket");
-            e.printStackTrace();
-        }
-		
-		this.scheduler_executer.execute(new PeerServer(this));
-		
-		
-		this.chord = new Chord(this,chord_port);
-		
-		
-		if(access_peer != null) {
-			this.chord.joinRing(access_peer);
+			serverSocket = new ServerSocket(server_port);
+		} catch (IOException e) {
+			System.err.println("Could not create the server socket");
+			e.printStackTrace();
 		}
-		
-		Runtime.getRuntime().addShutdownHook(new Thread() 
-	    { 
-		      public void run() { 
-		    	  chord.leaveRing();
+
+		this.scheduler_executer.execute(new PeerServer(this));
+
+		this.chord = new Chord(this, chord_port);
+
+		if (access_peer != null) {
+			try {
+				this.chord.joinRing(access_peer);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				try {
+					chord.leaveRing();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 		      } 
 		 });
 		
