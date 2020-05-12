@@ -160,9 +160,9 @@ public class Chord {
 				SSLMessage m = new SSLMessage(this.predeccessor);
 				this.setSuccessor(new_peer);
 	    		m.write("SETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		//m.read();
+	    		m.read();
 	    		m.write("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		//m.read();
+	    		m.read();
 	    		m.close();
 	    		this.populateFingerTable(new_peer);
 			}
@@ -173,18 +173,18 @@ public class Chord {
 			if(type == -1) { // se for um lookup do successor
 				SSLMessage m = new SSLMessage(this.successor);
 	    		m.write("SETPREDECCESSOR " + key + " " + ip + " " +  port);
-	    		//m.read();
+	    		m.read();
 	    		m.close();
 				
 	    		m = new SSLMessage(ip, port);
 	    		m.write("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
-	    		//m.read();
+	    		m.read();
 				
 	    		InetSocketAddress newFinger = new InetSocketAddress(ip,port);
 				this.setSuccessor(newFinger);
 				m = new SSLMessage(ip, port);
 	    		m.write("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-	    		//m.read();
+	    		m.read();
 	    		m.close();
 	    		
 	    		//novo sucessor encontrado, por isso mudar os fingers
@@ -203,7 +203,7 @@ public class Chord {
 				String data = "GETSUCCESSOR " + key + " " + ip + " " +  port;
 				SSLMessage m = new SSLMessage(closest);
 				m.write(data);
-				//m.read();
+				m.read();
 				m.close();
 			}else { // se for uma prucura de finger
 				/*SSLMessage m = new SSLMessage(closest,"FINDFINGER " + key + " " + ip + " " +  port + " " + type);

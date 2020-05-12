@@ -26,7 +26,7 @@ public class SSLMessageHandler implements Runnable{
 	@Override
 	public void run() {
 		
-		byte [] toSend = new byte[0];
+		byte [] toSend = "SUCCESS".getBytes();
 		
 		String message = new String(data, StandardCharsets.UTF_8);
 	    System.out.println("TO HANDLE " + message);
@@ -68,13 +68,12 @@ public class SSLMessageHandler implements Runnable{
 	    }
 
 
-		if (toSend != null && toSend.length > 0) {
-			try {
-				this.server.write(channel, engine, toSend);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
+		try {
+			this.server.write(channel, engine, toSend);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 	}

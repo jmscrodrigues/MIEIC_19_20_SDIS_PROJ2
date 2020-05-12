@@ -104,7 +104,7 @@ public class SSLServer extends SSLBase{
                 	if(debug) System.out.println("Client wants to close connection");
                     closeConnection(sC, eng);
                     if(debug) System.out.println("Connection closed");
-                    return null;
+                    return data;
                 default:
                     throw new IllegalStateException("Status is not valid: " + res.getStatus());
                 }

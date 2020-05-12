@@ -145,7 +145,7 @@ public class SSLMessage extends SSLBase {
                         break;
                     case CLOSED:
                         closeConnection(socketChannel, engine);
-                        return null;
+                        return data;
                     default:
                         throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
                     }
