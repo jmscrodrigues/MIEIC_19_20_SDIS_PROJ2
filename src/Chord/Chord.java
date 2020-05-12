@@ -74,12 +74,13 @@ public class Chord {
 		
 		System.out.println("Started join process");
 		
-		for(int i = 0; i < 30; i++) {
+		for(int i = 0; i < 5000; i++) {
 			try {
 				SSLMessage message = new SSLMessage(this.access_peer.getHostName(),this.access_peer.getPort());
 				message.connect();
-				message.write("ola");
+				message.write("ola " + this.port + " " + i);
 				message.read();
+				
 				message.close();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

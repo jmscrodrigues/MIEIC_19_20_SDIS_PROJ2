@@ -17,6 +17,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 
@@ -78,19 +79,19 @@ public class SSLServer extends SSLBase{
     @Override
     protected void read(SocketChannel sC, SSLEngine eng) throws IOException {
 
-        System.out.println("Will read from a client");
+        //System.out.println("Will read from a client");
 
         rcv_encryptedData.clear();
         int bytesRead = sC.read(rcv_encryptedData);
         if (bytesRead > 0) {
             rcv_encryptedData.flip();
             while (rcv_encryptedData.hasRemaining()) {
-                rcv_plainData.rewind();
+                rcv_plainData.clear();
                 SSLEngineResult res = eng.unwrap(rcv_encryptedData, rcv_plainData);
                 switch (res.getStatus()) {
                 case OK:
                     rcv_plainData.flip();
-                    System.out.println("Message: " + new String(rcv_plainData.array()));
+                    System.out.println("Message: " + new String(Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced())));
                     break;
                 case BUFFER_OVERFLOW:
                     rcv_plainData = enlargeApplicationBuffer(eng, rcv_plainData);
@@ -112,7 +113,7 @@ public class SSLServer extends SSLBase{
 
         } else if (bytesRead < 0) {
             handleEndOfStream(sC, eng);
-            System.out.println("Goodbye client!");
+            //System.out.println("Goodbye client!");
         }
     }
 
@@ -124,7 +125,7 @@ public class SSLServer extends SSLBase{
     @Override
     protected void write(SocketChannel sC, SSLEngine eng, byte[] msg) throws IOException {
 
-        System.out.println("Will write to a client");
+        //System.out.println("Will write to a client");
 
         send_plainData.clear();
         send_plainData.put(msg);
@@ -167,7 +168,7 @@ public class SSLServer extends SSLBase{
 
     private void accept(SelectionKey k) throws Exception {
 
-    	System.out.println("Connection request!");
+    	//System.out.println("Connection request!");
 
         SocketChannel socketChannel = ((ServerSocketChannel) k.channel()).accept();
         socketChannel.configureBlocking(false);

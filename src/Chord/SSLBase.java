@@ -36,7 +36,7 @@ public abstract class SSLBase {
 
     protected boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws IOException {
 
-        System.out.println("Going to do handshake...");
+        //System.out.println("Going to do handshake...");
 
         SSLEngineResult result;
         HandshakeStatus handshakeStatus;

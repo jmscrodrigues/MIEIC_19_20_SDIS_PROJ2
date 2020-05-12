@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -71,7 +72,7 @@ public class SSLMessage extends SSLBase {
     @Override
     protected void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws IOException {
 
-        System.out.println("Writting to server");
+        //System.out.println("Writting to server");
 
         send_plainData.clear();
         send_plainData.put(message);
@@ -110,7 +111,7 @@ public class SSLMessage extends SSLBase {
     @Override
     protected void read(SocketChannel socketChannel, SSLEngine engine) throws Exception  {
 
-        System.out.println("Readding from server");
+        //System.out.println("Readding from server");
 
         rcv_encryptedData.clear();
         int timeout = 50;
@@ -121,11 +122,11 @@ public class SSLMessage extends SSLBase {
             	rcv_encryptedData.flip();
                 while (rcv_encryptedData.hasRemaining()) {
                 	rcv_plainData.clear();
-                    SSLEngineResult r = engine.unwrap(rcv_encryptedData, rcv_plainData);
-                    switch (r.getStatus()) {
+                    SSLEngineResult res = engine.unwrap(rcv_encryptedData, rcv_plainData);
+                    switch (res.getStatus()) {
                     case OK:
                     	rcv_plainData.flip();
-                        System.out.println("Server response: " + new String(rcv_plainData.array()));
+                        System.out.println("Message: " + new String(Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced())));
                         exit = true;
                         break;
                     case BUFFER_OVERFLOW:
@@ -138,7 +139,7 @@ public class SSLMessage extends SSLBase {
                         closeConnection(socketChannel, engine);
                         return;
                     default:
-                        throw new IllegalStateException("Invalid SSL status: " + r.getStatus());
+                        throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
                     }
                 }
             } else if (bytesRead < 0) {
