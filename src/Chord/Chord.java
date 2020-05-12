@@ -28,6 +28,8 @@ public class Chord {
 	
 	private ServerSocket serverSocket;
 	
+	public SSLServer sllServer;
+	
 	private ConcurrentHashMap<Integer,InetSocketAddress> fingerTable = new ConcurrentHashMap<>();
 	
 	int port;
@@ -47,6 +49,7 @@ public class Chord {
         try {
             //serverSocket = new ServerSocket(port);
         	//this.server = new ChordSSLServer(this,"TLSv1.2","localhost",port);
+        	this.sllServer = new SSLServer("localhost",port);
         } catch (Exception e) {
             System.err.println("Could not create the server");
             e.printStackTrace();
@@ -56,7 +59,7 @@ public class Chord {
         this.predeccessor = null;
         this.key = this.hash(selfAddress);
         
-        //this.peer.getExecuter().execute(this.server);
+        this.peer.getExecuter().execute(new ServerThread(this));
         //this.peer.getExecuter().execute(new ChrodThread(this));
         
         /*this.getPeer().getExecuter().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
@@ -70,6 +73,18 @@ public class Chord {
 		this.access_peer = peer;
 		
 		System.out.println("Started join process");
+		
+		for(int i = 0; i < 1; i++) {
+			try {
+				SSLMessage message = new SSLMessage(this.access_peer.getHostName(),this.access_peer.getPort());
+				message.write("ola" + i);
+				message.read();
+				message.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
 		/*String data = "GETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
 		SSLMessage m = new SSLMessage(peer,data);
