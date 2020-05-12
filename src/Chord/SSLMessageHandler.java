@@ -68,13 +68,15 @@ public class SSLMessageHandler implements Runnable{
 	    }
 
 
-		
-		try {
-			this.server.write(channel, engine, "Hello! I am your server!");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (toSend != null && toSend.length > 0) {
+			try {
+				this.server.write(channel, engine, toSend);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		
 	}
 	
 	
