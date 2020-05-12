@@ -109,8 +109,8 @@ public class SSLMessage extends SSLBase {
         }
     }
 
-    public void read() throws Exception {
-        read(socketChannel, engine);
+    public byte[] read() throws Exception {
+        return read(socketChannel, engine);
     }
 
     @Override

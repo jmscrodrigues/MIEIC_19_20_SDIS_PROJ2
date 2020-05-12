@@ -35,8 +35,16 @@ public class SSLMessageHandler implements Runnable{
 		
 	    if(op.equals("LOOKUP")) {
 			int key = Integer.parseInt(parts[1].replaceAll("\\D", ""));
-			InetSocketAddress ret = this.chord.lookup(key);
-			toSend = new String("LOOKUPRET " +  this.chord.getName() + " " + this.chord.getPort() + " " + ret.getHostName() + " " + ret.getPort()).getBytes();
+			InetSocketAddress ret = null;
+			try {
+				ret = this.chord.lookup(key);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			if(ret != null)
+				toSend = new String("LOOKUPRET " +  this.chord.getName() + " " + this.chord.getPort() + " " + ret.getHostName() + " " + ret.getPort()).getBytes();
+			else 
+				toSend = new String("ERROR").getBytes();
 	    }else if(op.equals("SETSUCCESSOR")) {
 	    	String ip = parts[2];
 	    	int port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
