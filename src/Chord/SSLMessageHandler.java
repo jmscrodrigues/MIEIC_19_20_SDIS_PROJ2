@@ -1,9 +1,12 @@
 package Chord;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import javax.net.ssl.SSLEngine;
 
@@ -14,6 +17,9 @@ public class SSLMessageHandler implements Runnable{
 	SocketChannel channel;
 	SSLEngine engine;
 	byte[] data;
+	
+	byte[] header = null;
+	byte[] body = null;
 	
 	SSLMessageHandler(SSLServer s, Chord c, SocketChannel sc, SSLEngine eng, byte[] d){
 		this.server = s;
@@ -65,8 +71,18 @@ public class SSLMessageHandler implements Runnable{
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-	    }
-
+	    }else if(op.equals("PUT")) {
+			int key = Integer.parseInt(parts[1]);
+			this.getHeaderAndBody();
+			this.chord.putInMemory(key, body);
+		}else if(op.equals("GET")) {
+			int key = Integer.parseInt(parts[1]);
+			toSend = this.chord.getInMemory(key);
+		}else if(op.equals("REMOVE")) {
+			int key = Integer.parseInt(parts[1]);
+			toSend = this.chord.removeInMemory(key);
+		}
+	    
 
 
 		try {
@@ -76,6 +92,18 @@ public class SSLMessageHandler implements Runnable{
 			e.printStackTrace();
 		}
 		
+	}
+	
+	
+	public void getHeaderAndBody() {
+		byte[] buf = data;
+		for(int i = 0; i <= buf.length - 4 ; ++i) {
+			if(buf[i] == 0xD && buf[i+1] == 0xA && buf[i+2] == 0xD && buf[i+3] == 0xA) {
+				header = Arrays.copyOf(buf, i);
+				body = Arrays.copyOfRange(buf,i+4,buf.length);
+				break;
+			}
+		}
 	}
 	
 	

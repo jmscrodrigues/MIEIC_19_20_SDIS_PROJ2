@@ -19,6 +19,7 @@ import javax.net.ssl.TrustManager;
 
 public class SSLMessage extends SSLBase {
 	
+	static final String CRLF = String.valueOf((char)0xD) + String.valueOf((char)0xA) ;
 	
 	private String ip;
 
@@ -73,6 +74,16 @@ public class SSLMessage extends SSLBase {
     public void write(byte[] message) throws IOException {
         write(socketChannel, engine, message);
     }
+    
+    public void write(String d, byte [] body) throws IOException{
+		String header = d + " " + CRLF + CRLF;
+		byte[] headerB = header.getBytes();
+		byte [] data = new byte[headerB.length + body.length];
+		System.arraycopy(headerB, 0, data, 0, headerB.length);
+		System.arraycopy(body, 0, data, headerB.length, body.length);
+		this.write(data);
+	}
+
 
     @Override
     protected void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws IOException {

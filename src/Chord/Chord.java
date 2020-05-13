@@ -245,23 +245,29 @@ public class Chord {
 	public void put	(String identifier, byte[] data) throws Exception {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
-		Message m = new Message("PUT " + key , data);
-		m.sendMessage(dest);
+		SSLMessage m = new SSLMessage(dest);
+		m.write("PUT " + key , data);
+		m.read();
+		m.close();
 	}
 	
 	public byte[] get(String identifier) throws Exception {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
-		Message m = new Message("GET " + key);
-		byte[] data =  m.sendAndReceive(dest);
+		SSLMessage m = new SSLMessage(dest);
+		m.write("GET " + key);
+		byte[] data =  m.read();
+		m.close();
 		return data;
 	}
 	
 	public byte[] remove(String identifier) throws Exception {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
-		Message m = new Message("REMOVE " + key);
-		byte[] data =  m.sendAndReceive(dest);
+		SSLMessage m = new SSLMessage(dest);
+		m.write("REMOVE " + key);
+		byte[] data =  m.read();
+		m.close();
 		return data;
 	}
 	
