@@ -84,6 +84,16 @@ public class SSLMessageHandler implements Runnable{
 		}else if(op.equals("REMOVE")) {
 			int key = Integer.parseInt(parts[1]);
 			toSend = this.chord.removeInMemory(key);
+		}else if(op.equals("GETDATA")) {
+			int key = Integer.parseInt(parts[1]);
+	    	String ip = parts[2];
+	    	int port = Integer.parseInt(parts[3]);
+			try {
+				this.chord.sendData(key,ip,port);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	    
 

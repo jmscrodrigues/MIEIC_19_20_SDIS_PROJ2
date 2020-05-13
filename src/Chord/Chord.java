@@ -100,12 +100,14 @@ public class Chord {
 		
 		this.updateFingerTable();
 		
-		/*System.out.println("Asking data to sucessor initiated");
+		System.out.println("Asking data to sucessor initiated");
 		
-		m = new Message("GETDATA " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
-		m.sendMessage(successor);
+		m = new SSLMessage(this.successor);
+		m.write("GETDATA " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+		m.read();
+		m.close();
 
-		System.out.println("Node joined ring");*/
+		System.out.println("Node joined ring");
 		
 	}
 	
@@ -114,19 +116,21 @@ public class Chord {
 		
 		if(this.successor != null && this.predeccessor != null) {
 			
-			/*System.out.println("Transfering data to sucessor initiated");
+			System.out.println("Transfering data to sucessor initiated");
 			
+			SSLMessage m = new SSLMessage(this.successor);
 			ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
 			Set<Entry<Integer, byte[]>> entrySet = data.entrySet();
 			for(Iterator<ConcurrentHashMap.Entry<Integer, byte[]>> itr = entrySet.iterator(); itr.hasNext();) {
 				ConcurrentHashMap.Entry<Integer, byte[]> entry = itr.next();
-				Message m = new Message("PUT " + entry.getKey() , entry.getValue());
-				m.sendMessage(this.successor);
+				m.write("PUT " + entry.getKey() , entry.getValue());
+				m.read();
 			}
+			m.close();
 			
 			System.out.println("Transfering data to sucessor done");
-			*/
-			SSLMessage m = new SSLMessage(this.successor);
+			
+			m = new SSLMessage(this.successor);
 			m.write("SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
 			//m.read();
 			m.close();
@@ -287,19 +291,21 @@ public class Chord {
 	/*
 	 * Send data to node that has just joined
 	 */
-	public void sendData(int key, String ip, int port) {
+	public void sendData(int key, String ip, int port) throws Exception {
 		InetSocketAddress pre = new InetSocketAddress(ip,port);
 		ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
 		Set<Entry<Integer, byte[]>> entrySet = data.entrySet();
+		SSLMessage m = new SSLMessage(pre);
 		for(Iterator<ConcurrentHashMap.Entry<Integer, byte[]>> itr = entrySet.iterator(); itr.hasNext();) {
 			ConcurrentHashMap.Entry<Integer, byte[]> entry = itr.next();
 			int id = entry.getKey();
 			if(betweenOpenClose(this.key,key,id)) {
-				Message m = new Message("PUT " + entry.getKey() , entry.getValue());
+				m.write("PUT " + entry.getKey() , entry.getValue());
+				m.read();
 				data.remove(id);
-				m.sendMessage(pre);
 			}
 		}
+		m.close();
 		
 	}
 	
@@ -307,7 +313,7 @@ public class Chord {
 	 * Get predecessor of node passed as argument
 	 */
 	public InetSocketAddress getPredeccessor(InetSocketAddress node) {
-		InetSocketAddress ret = null;
+		/*InetSocketAddress ret = null;
 		Message m = new Message("GETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 		byte [] buf = m.sendAndReceive(this.successor);
 		
@@ -317,7 +323,8 @@ public class Chord {
 	    
 	    ret = new InetSocketAddress(parts[1],Integer.parseInt(parts[2]));
 	    System.out.println("Get predeccessor done!");
-		return ret;
+		return ret;*/
+		return null;
 	}
 	
 	public void notify(InetSocketAddress pre) {
