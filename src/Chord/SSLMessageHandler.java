@@ -78,6 +78,9 @@ public class SSLMessageHandler implements Runnable{
 		}else if(op.equals("GET")) {
 			int key = Integer.parseInt(parts[1]);
 			toSend = this.chord.getInMemory(key);
+			if(toSend == null) {
+				toSend = "FAIL".getBytes();
+			}
 		}else if(op.equals("REMOVE")) {
 			int key = Integer.parseInt(parts[1]);
 			toSend = this.chord.removeInMemory(key);
