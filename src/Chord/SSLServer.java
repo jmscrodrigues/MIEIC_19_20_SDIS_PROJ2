@@ -159,9 +159,9 @@ public class SSLServer extends SSLBase{
 
     public void stop() {
     	if(debug) System.out.println("Server closing");
-    	serverActive = false;
     	executor.shutdown();
     	selector.wakeup();
+    	serverActive = false;
     }
 
     protected boolean isServerActive() {

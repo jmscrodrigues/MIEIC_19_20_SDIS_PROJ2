@@ -94,7 +94,43 @@ public class SSLMessageHandler implements Runnable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+		}else if (op.equals("DELETEFINGER")) {
+			int exitKey = Integer.parseInt(parts[1]);
+			int oldKey = Integer.parseInt(parts[2]);
+			String ip = parts[3];
+			int port = Integer.parseInt(parts[4]);
+			this.chord.deleteFinger(oldKey, new InetSocketAddress(ip,port));
+			try {
+				this.chord.sendNotifyDeleteFinger(exitKey, oldKey, ip, port);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else if(op.equals("NEWFINGER")) {
+	    	int originKey = Integer.parseInt(parts[1]);
+	    	String ip = parts[2];
+	    	int port = Integer.parseInt(parts[3]);
+	    	this.chord.foundNewFinger(new InetSocketAddress(ip,port));
+	    	try {
+				this.chord.sendNotifyNewFinger(originKey, ip, port);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else if(op.equals("GETPREDECCESSOR")) {
+	    	InetSocketAddress pre = this.chord.getPredeccessor();
+	    	toSend = new String("PREDECCESSOR " + pre.getHostName() + " " + pre.getPort()).getBytes();
+	    	System.out.println("Sending Predecessor");
+	    	if(toSend == null) {
+				toSend = new String("").getBytes();
+			}
+	    }
+	    else if(op.equals("NOTIFY")) {
+	    	int key = Integer.parseInt(parts[1]);
+	    	String ip = parts[2];
+	    	int port = Integer.parseInt(parts[3]);
+	    	this.chord.notify(new InetSocketAddress(ip, port));
+	    }
 	    
 
 
