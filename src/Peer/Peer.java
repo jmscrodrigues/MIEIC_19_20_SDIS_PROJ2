@@ -53,6 +53,7 @@ public class Peer {
 		      } 
 		 });
 		
+		this.chord.printFingerTable();
 		
 	}
 	

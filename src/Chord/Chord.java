@@ -75,7 +75,7 @@ public class Chord {
 		String data = "GETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
 		SSLMessage m = new SSLMessage(this.access_peer);
 		m.write(data);
-		//m.read();
+		m.read();
 		m.close();
 		
 		/*String data = "LOOKUP " + this.key;
@@ -94,6 +94,9 @@ public class Chord {
 		m = new SSLMessage(this.successor.getHostName(),this.successor.getPort(),data);
 		m.sendMessage();*/
 		
+		while(this.connected.get() != true) {
+			
+		}
 		
 		this.updateFingerTable();
 		
@@ -217,6 +220,7 @@ public class Chord {
 	
 	
 	public InetSocketAddress lookup(int key) throws Exception {
+		System.out.println("Going to lookup");
 		InetSocketAddress ret = null;
 		
 		if(this.successor == null) {
@@ -228,7 +232,9 @@ public class Chord {
 			//Message m = new Message("LOOKUP " + key);
 			SSLMessage m = new SSLMessage(closest.getHostName(), closest.getPort());
 			m.write("LOOKUP " + key);
-    		String [] parts = new String(m.read()).split(" ");
+			byte [] data = m.read();
+			m.close();
+    		String [] parts = new String(data).split(" ");
     		ret = new InetSocketAddress(parts[3],Integer.parseInt(parts[4].replaceAll("\\D", "")));
 		}
 		
@@ -376,6 +382,7 @@ public class Chord {
 	}*/
 	//Maybe done here ??
 	public void updateFingerTable() throws Exception {
+		System.out.println("Going to update fingers");
 		InetSocketAddress finger = null;
 		for(int i = 0; i < M; i++) {
 			int index = this.positiveModule((int) (this.key + Math.pow(2, i)), (int)  Math.pow(2, M));
