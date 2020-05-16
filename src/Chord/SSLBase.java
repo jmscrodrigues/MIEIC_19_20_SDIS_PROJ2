@@ -1,5 +1,7 @@
 package Chord;
 
+import javax.net.ssl.*;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,15 +10,6 @@ import java.nio.channels.SocketChannel;
 import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 
 public abstract class SSLBase {
 
@@ -34,7 +27,7 @@ public abstract class SSLBase {
 
     protected abstract void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws Exception;
     
-    protected boolean debug = false;;
+    protected boolean debug = false;
     
     public void setDebug(boolean b) {
     	this.debug = b;
@@ -216,9 +209,7 @@ public abstract class SSLBase {
         try {
             keyStore.load(keyStoreIS, keystorePassword.toCharArray());
         } finally {
-            if (keyStoreIS != null) {
-                keyStoreIS.close();
-            }
+            keyStoreIS.close();
         }
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         kmf.init(keyStore, keyPassword.toCharArray());
@@ -231,9 +222,7 @@ public abstract class SSLBase {
         try {
             trustStore.load(trustStoreIS, keystorePassword.toCharArray());
         } finally {
-            if (trustStoreIS != null) {
-                trustStoreIS.close();
-            }
+            trustStoreIS.close();
         }
         TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         trustFactory.init(trustStore);

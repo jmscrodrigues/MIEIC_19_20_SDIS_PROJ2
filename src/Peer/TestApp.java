@@ -34,17 +34,24 @@ public class TestApp {
 		String op = args[1];
 		
 		String toSend = null;
-		
-		if(op.equals("PUT")) {
-			String key = args[2];
-			String value = args[3];
-			toSend = "PUT " + key + " " + value;
-		}else if(op.equals("GET")) {
-			String key = args[2];
-			toSend = "GET " + key;
-		}else if(op.equals("REMOVE")) {
-			String key = args[2];
-			toSend = "REMOVE " + key;
+
+		switch (op) {
+			case "PUT": {
+				String key = args[2];
+				String value = args[3];
+				toSend = "PUT " + key + " " + value;
+				break;
+			}
+			case "GET": {
+				String key = args[2];
+				toSend = "GET " + key;
+				break;
+			}
+			case "REMOVE": {
+				String key = args[2];
+				toSend = "REMOVE " + key;
+				break;
+			}
 		}
 		
 		byte[] message = toSend.getBytes();

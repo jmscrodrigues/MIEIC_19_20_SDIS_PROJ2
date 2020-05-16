@@ -1,6 +1,7 @@
 package Chord;
 
-import java.io.IOException;
+import Peer.Peer;
+
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
@@ -13,9 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import Peer.Peer;
-
-
 public class Chord {
 	
 	static final int M = 15;
@@ -25,7 +23,7 @@ public class Chord {
 	
 	private InetSocketAddress selfAddress;
 	private InetSocketAddress successor;
-	private InetSocketAddress predeccessor;
+	private InetSocketAddress predecessor;
 	private InetSocketAddress access_peer;
 	
 	private ServerSocket serverSocket;
@@ -50,18 +48,18 @@ public class Chord {
         this.port = port;
         try {
         	sllServer = new ServerThread(this,"localhost",port);
-        	this.peer.getExecuter().execute(sllServer);
+        	this.peer.getExecutor().execute(sllServer);
         } catch (Exception e) {
             System.err.println("Could not create the server");
             e.printStackTrace();
         }
         this.selfAddress = new InetSocketAddress("localhost" , port);
         this.successor = null;
-        this.predeccessor = null;
+        this.predecessor = null;
         this.key = this.hash(selfAddress);
         
         
-        this.getPeer().getExecuter().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
+        this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
         
         System.out.println("Chord initiated with key " + this.key);
         
@@ -79,12 +77,12 @@ public class Chord {
 		m.read();
 		m.close();
 		
-		while(this.connected.get() != true) {
+		while(!this.connected.get()) {
 		}
 		
 		this.updateFingerTable();
 		
-		System.out.println("Asking data to sucessor initiated");
+		System.out.println("Asking data to successor initiated");
 		
 		m = new SSLMessage(this.successor);
 		m.write("GETDATA " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
@@ -98,34 +96,32 @@ public class Chord {
 	public void leaveRing() throws Exception {
 		System.out.println("Started leaving process");
 		
-		if(this.successor != null && this.predeccessor != null) {
+		if(this.successor != null && this.predecessor != null) {
 			
-			System.out.println("Transfering data to sucessor initiated");
+			System.out.println("Transferring data to successor initiated");
 			
 			SSLMessage m = new SSLMessage(this.successor);
 			ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
-			Set<Entry<Integer, byte[]>> entrySet = data.entrySet();
-			for(Iterator<ConcurrentHashMap.Entry<Integer, byte[]>> itr = entrySet.iterator(); itr.hasNext();) {
-				ConcurrentHashMap.Entry<Integer, byte[]> entry = itr.next();
-				m.write("PUT " + entry.getKey() , entry.getValue());
+			for (Entry<Integer, byte[]> entry : data.entrySet()) {
+				m.write("PUT " + entry.getKey(), entry.getValue());
 				m.read();
 			}
 			m.close();
 			
-			System.out.println("Transfering data to sucessor done");
+			System.out.println("Transferring data to successor done");
 			
 			m = new SSLMessage(this.successor);
-			m.write("SETPREDECCESSOR " + this.hash(predeccessor) + " " + this.predeccessor.getHostName() + " " +  this.predeccessor.getPort());
+			m.write("SETPREDECESSOR " + this.hash(predecessor) + " " + this.predecessor.getHostName() + " " +  this.predecessor.getPort());
 			//m.read();
 			m.close();
 			
-			m = new SSLMessage(this.predeccessor);
+			m = new SSLMessage(this.predecessor);
 			m.write("SETSUCCESSOR " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
 			//m.read();
 			m.close();
 			
-			m = new SSLMessage(this.predeccessor);
-			m.write("DELETEFINGER " + this.hash(predeccessor) + " " + this.key + " " + this.successor.getHostName() + " " +  this.successor.getPort() );
+			m = new SSLMessage(this.predecessor);
+			m.write("DELETEFINGER " + this.hash(predecessor) + " " + this.key + " " + this.successor.getHostName() + " " +  this.successor.getPort() );
 			m.read();
 			m.close();
 			System.out.println("Sent new delete to predecessor");
@@ -141,20 +137,20 @@ public class Chord {
 	 * @param ip Its ip
 	 * @param port Its port
 	 * @param type: -1-> Node joining  >=0: Updating fingerTable of index type
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public void find_successor(int key, String ip, int port, int type) throws Exception { 
 		System.out.println("a");
-		//se nao existir sucessor, significa que é o unico na rede
+		//se nao existir sucessor, significa que ï¿½ o unico na rede
 		if(this.successor == null) {
 			if(type == -1) { // se for um lookup do successor
 				InetSocketAddress new_peer = new InetSocketAddress(ip,port);
-				this.setPredeccessor(new_peer);
-				SSLMessage m = new SSLMessage(this.predeccessor);
+				this.setPredecessor(new_peer);
+				SSLMessage m = new SSLMessage(this.predecessor);
 				this.setSuccessor(new_peer);
 	    		m.write("SETSUCCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 	    		m.read();
-	    		m.write("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+	    		m.write("SETPREDECESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 	    		m.read();
 	    		m.close();
 	    		this.populateFingerTable(new_peer);
@@ -165,7 +161,7 @@ public class Chord {
 		if(this.betweenOpenClose(this.key, this.hash(successor), key)) {
 			if(type == -1) { // se for um lookup do successor
 				SSLMessage m = new SSLMessage(this.successor);
-	    		m.write("SETPREDECCESSOR " + key + " " + ip + " " +  port);
+	    		m.write("SETPREDECESSOR " + key + " " + ip + " " +  port);
 	    		m.read();
 	    		m.close();
 				
@@ -176,7 +172,7 @@ public class Chord {
 	    		InetSocketAddress newFinger = new InetSocketAddress(ip,port);
 				this.setSuccessor(newFinger);
 				m = new SSLMessage(ip, port);
-	    		m.write("SETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+	    		m.write("SETPREDECESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 	    		m.read();
 	    		m.close();
 	    		
@@ -202,8 +198,7 @@ public class Chord {
 	
 	
 	public InetSocketAddress lookup(int key) throws Exception {
-		InetSocketAddress ret = null;
-		
+
 		if(this.successor == null) {
 			return this.selfAddress;
 		}else if(this.betweenOpenClose(this.key, this.hash(successor), key)) {
@@ -215,9 +210,8 @@ public class Chord {
 			byte [] data = m.read();
 			m.close();
     		String [] parts = new String(data).split(" ");
-    		ret = new InetSocketAddress(parts[3],Integer.parseInt(parts[4].replaceAll("\\D", "")));
+			return new InetSocketAddress(parts[3],Integer.parseInt(parts[4].replaceAll("\\D", "")));
 		}
-		return ret;
 	}
 	
 	
@@ -269,13 +263,11 @@ public class Chord {
 	public void sendData(int key, String ip, int port) throws Exception {
 		InetSocketAddress pre = new InetSocketAddress(ip,port);
 		ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
-		Set<Entry<Integer, byte[]>> entrySet = data.entrySet();
 		SSLMessage m = new SSLMessage(pre);
-		for(Iterator<ConcurrentHashMap.Entry<Integer, byte[]>> itr = entrySet.iterator(); itr.hasNext();) {
-			ConcurrentHashMap.Entry<Integer, byte[]> entry = itr.next();
+		for (Entry<Integer, byte[]> entry : data.entrySet()) {
 			int id = entry.getKey();
-			if(betweenOpenClose(this.key,key,id)) {
-				m.write("PUT " + entry.getKey() , entry.getValue());
+			if (betweenOpenClose(this.key, key, id)) {
+				m.write("PUT " + entry.getKey(), entry.getValue());
 				m.read();
 				data.remove(id);
 			}
@@ -286,25 +278,24 @@ public class Chord {
 	/*
 	 * Get predecessor of node passed as argument
 	 */
-	public InetSocketAddress getPredeccessor(InetSocketAddress node) throws Exception {
-		InetSocketAddress ret = null;
+	public InetSocketAddress getPredecessor(InetSocketAddress node) throws Exception {
 		SSLMessage m = new SSLMessage(this.successor);
-		m.write("GETPREDECCESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+		m.write("GETPREDECESSOR " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 		byte [] buf = m.read();
 		m.close();
-		
+
 		String message = new String(buf, StandardCharsets.UTF_8);
 	    System.out.println(message);
 	    String[] parts = message.split(" ");
-	    
-	    ret = new InetSocketAddress(parts[1],Integer.parseInt(parts[2]));
-	    System.out.println("Get predeccessor done!");
+
+		InetSocketAddress ret = new InetSocketAddress(parts[1], Integer.parseInt(parts[2]));
+	    System.out.println("Get predecessor done!");
 		return ret;
 	}
 	
 	public void notify(InetSocketAddress pre) {
-		if(this.predeccessor == null || betweenOpenOpen(hash(this.predeccessor),this.key,hash(pre))) {
-			this.setPredeccessor(pre);
+		if(this.predecessor == null || betweenOpenOpen(hash(this.predecessor),this.key,hash(pre))) {
+			this.setPredecessor(pre);
 		}
 	}
 	
@@ -312,7 +303,7 @@ public class Chord {
 	public void stabilize() throws Exception {
 		if(this.successor == null)
 			return;
-		InetSocketAddress x = this.getPredeccessor(this.successor);
+		InetSocketAddress x = this.getPredecessor(this.successor);
 		if(betweenOpenOpen(this.key,hash(this.successor),hash(x))) {
 			this.setSuccessor(x);
 		}
@@ -341,12 +332,12 @@ public class Chord {
 	}
 	
 	public void sendNotifyNewFinger(int originKey , String ip, int port) throws Exception {
-		int pred_key = this.hash(this.predeccessor);
+		int pred_key = this.hash(this.predecessor);
 		
 		System.out.println(this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) + "  " + originKey + " " + pred_key);
 		if(! betweenOpenOpen( this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) , originKey , pred_key ))
 			return;
-		SSLMessage m = new SSLMessage(this.predeccessor);
+		SSLMessage m = new SSLMessage(this.predecessor);
 		m.write("NEWFINGER " + originKey + " " + ip + " " +  port + " ");
 		m.read();
 		m.close();
@@ -354,13 +345,13 @@ public class Chord {
 	}
 	
 	public void sendNotifyDeleteFinger(int originKey , int oldKey, String ip, int port) throws Exception {
-		int pred_key = this.hash(this.predeccessor);
+		int pred_key = this.hash(this.predecessor);
 		
 		int max_origin = this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M));
 		System.out.println(max_origin + "  " + originKey + " " + pred_key);
 		if(! betweenOpenOpen( max_origin , originKey , pred_key ))
 			return;
-		SSLMessage m = new SSLMessage(this.predeccessor);
+		SSLMessage m = new SSLMessage(this.predecessor);
 		m.write("DELETEFINGER " + originKey + " " + oldKey + " " + ip + " " +  port + " ");
 		m.read();
 		m.close();
@@ -401,15 +392,15 @@ public class Chord {
 		printKnowns();
 	}
 	
-	public void setPredeccessor(InetSocketAddress pre) {
-		if(this.predeccessor == null)
-			this.predeccessor = pre;
+	public void setPredecessor(InetSocketAddress pre) {
+		if(this.predecessor == null)
+			this.predecessor = pre;
 		else {
 			if(this.selfAddress.getHostName().equals(pre.getHostName())
 					&& this.selfAddress.getPort() == pre.getPort())
-				this.predeccessor = null;
+				this.predecessor = null;
 			else
-				this.predeccessor = pre;
+				this.predecessor = pre;
 		}
 		System.out.println("New predecessor found");
 		printKnowns();
@@ -429,13 +420,13 @@ public class Chord {
 		return this.serverSocket;
 	}
 	
-	public void populateFingerTable(InetSocketAddress addrs) {
+	public void populateFingerTable(InetSocketAddress address) {
 		for(int i = 0; i < M; i++)
-			this.fingerTable.put(i, addrs);
+			this.fingerTable.put(i, address);
 	}
 	
 	private InetSocketAddress closest_preceding_node(int key) {
-		InetSocketAddress ret = null;
+		InetSocketAddress ret;
 		for(int i = M-1; i >= 0; i--) {
 			ret = this.fingerTable.get(M);
 			if(ret == null) continue;
@@ -452,8 +443,8 @@ public class Chord {
 	
 	public void printKnowns() {
 		System.out.println("My key: " + this.key);
-		if(this.predeccessor != null)
-			System.out.println("Predeccessor: " + this.predeccessor.getHostName() + "   " + this.predeccessor.getPort() + " " + hash(this.predeccessor) );
+		if(this.predecessor != null)
+			System.out.println("Predecessor: " + this.predecessor.getHostName() + "   " + this.predecessor.getPort() + " " + hash(this.predecessor) );
 		if(this.successor != null)
 			System.out.println("Successor: " + this.successor.getHostName() + "   " + this.successor.getPort()  + " " + hash(this.successor) );
 	}
@@ -477,19 +468,15 @@ public class Chord {
 	}*/
 	
 	private boolean betweenOpenClose(int a, int b, int c) {
-		if(a < b && a < c && c <= b)
+		if(a < c && c <= b)
 			return true;
-		if(a > b && (c > a || c <= b))
-			return true;
-		return false;
+		return a > b && (c > a || c <= b);
 	}
 	
 	private boolean betweenOpenOpen(int a, int b, int c) {
-		if(a < b && a < c && c < b)
+		if(a < c && c < b)
 			return true;
-		if(a > b && (c > a || c < b))
-			return true;
-		return false;
+		return a > b && (c > a || c < b);
 	}
 	
 	private int positiveModule(int a, int m) {
@@ -498,8 +485,8 @@ public class Chord {
 		return a % m;
 	}
 	
-	public InetSocketAddress getPredeccessor() {
-		return this.predeccessor;
+	public InetSocketAddress getPredecessor() {
+		return this.predecessor;
 	}
 	
 	public String getName() {

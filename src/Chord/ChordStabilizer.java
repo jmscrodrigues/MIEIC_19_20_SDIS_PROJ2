@@ -24,7 +24,7 @@ public class ChordStabilizer implements Runnable{
 		
 		this.chord.printKnowns();
 		
-		this.chord.getPeer().getExecuter().schedule(this, Chord.UPDATE_TIME, TimeUnit.SECONDS);
+		this.chord.getPeer().getExecutor().schedule(this, Chord.UPDATE_TIME, TimeUnit.SECONDS);
 	}
 
 }

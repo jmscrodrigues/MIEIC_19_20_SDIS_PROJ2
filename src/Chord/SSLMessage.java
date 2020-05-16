@@ -1,20 +1,12 @@
 package Chord;
 
 
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.security.SecureRandom;
 import java.util.Arrays;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
 
 
 public class SSLMessage extends SSLBase {
@@ -88,7 +80,7 @@ public class SSLMessage extends SSLBase {
     @Override
     protected void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws IOException {
 
-    	if(debug) System.out.println("Writting to server");
+    	if(debug) System.out.println("Writing to server");
 
         send_plainData.clear();
         send_plainData.put(message);

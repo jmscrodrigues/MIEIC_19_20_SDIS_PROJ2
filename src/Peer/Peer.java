@@ -1,26 +1,24 @@
 package Peer;
 
+import Chord.Chord;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-
-import Chord.Chord;
 
 public class Peer {
 
 	private Chord chord;
-	private ScheduledThreadPoolExecutor scheduler_executer;
+	private ScheduledThreadPoolExecutor scheduler_executor;
 
 	private ServerSocket serverSocket;
 
 	Peer(int server_port, int chord_port, InetSocketAddress access_peer) {
 
-		this.scheduler_executer = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
+		this.scheduler_executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
 
 		try {
 			serverSocket = new ServerSocket(server_port);
@@ -29,7 +27,7 @@ public class Peer {
 			e.printStackTrace();
 		}
 
-		this.scheduler_executer.execute(new PeerServer(this));
+		this.scheduler_executor.execute(new PeerServer(this));
 
 		this.chord = new Chord(this, chord_port);
 
@@ -42,16 +40,14 @@ public class Peer {
 			}
 		}
 
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				try {
-					chord.leaveRing();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		      } 
-		 });
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			try {
+				chord.leaveRing();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		  }));
 		
 		this.chord.printFingerTable();
 		
@@ -64,21 +60,19 @@ public class Peer {
 	
 	public String get(String key) throws Exception {
 		byte[] ret = this.chord.get(key);
-		String value = new String(ret, StandardCharsets.UTF_8);
-		return value;
+		return new String(ret, StandardCharsets.UTF_8);
 	}
 	public String remove(String key) throws Exception {
 		byte[] ret = this.chord.remove(key);
-		String value = new String(ret, StandardCharsets.UTF_8);
-		return value;
+		return new String(ret, StandardCharsets.UTF_8);
 	}
 	
 	public ServerSocket getServerSocket() {
 		return this.serverSocket;
 	}
 	
-	public ScheduledThreadPoolExecutor getExecuter() {
-		return this.scheduler_executer;
+	public ScheduledThreadPoolExecutor getExecutor() {
+		return this.scheduler_executor;
 	}
 	
 	public static void main(String[] args) {

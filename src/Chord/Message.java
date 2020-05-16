@@ -42,24 +42,13 @@ public class Message {
 			}
 		}
 	}
-	public void sendMessage(InetSocketAddress addrss) {
-		this.sendMessage(addrss.getHostName(),addrss.getPort());
+	public void sendMessage(InetSocketAddress address) {
+		this.sendMessage(address.getHostName(),address.getPort());
 	}
 	
 	public void sendMessage(Socket socket) {	
 		byte[] message = data;
-		try {
-			OutputStream out = socket.getOutputStream(); 
-		    DataOutputStream dos = new DataOutputStream(out);
-		    dos.writeInt(message.length);
-		    dos.write(message,0,message.length);
-		    socket.close();
-		}catch(IOException e) {
-			System.err.println("Error sending message.");
-            System.err.println(e);
-            e.printStackTrace();
-            System.exit(-1);
-		}
+		SendMessageToSocket(socket, message);
 	}
 	
 	public void sendMessage(String ip, int port) {
@@ -73,8 +62,12 @@ public class Message {
         }
 		
 		byte[] message = data;
+		SendMessageToSocket(socket, message);
+	}
+
+	private void SendMessageToSocket(Socket socket, byte[] message) {
 		try {
-			OutputStream out = socket.getOutputStream(); 
+			OutputStream out = socket.getOutputStream();
 		    DataOutputStream dos = new DataOutputStream(out);
 		    dos.writeInt(message.length);
 		    dos.write(message,0,message.length);
@@ -86,9 +79,9 @@ public class Message {
             System.exit(-1);
 		}
 	}
-	
-	public byte[] sendAndReceive(InetSocketAddress addrss) {
-		return this.sendAndReceive(addrss.getHostName(),addrss.getPort());
+
+	public byte[] sendAndReceive(InetSocketAddress address) {
+		return this.sendAndReceive(address.getHostName(),address.getPort());
 	}
 	
 	public byte[] sendAndReceive(String ip, int port) {
