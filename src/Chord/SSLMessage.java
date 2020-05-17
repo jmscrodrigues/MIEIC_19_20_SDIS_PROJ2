@@ -27,6 +27,7 @@ public class SSLMessage extends SSLBase {
     }
     
     public SSLMessage(String ip, int port)  {
+    	this.debug = true;
     	this.ip = ip;
     	this.port = port;
 
@@ -100,18 +101,21 @@ public class SSLMessage extends SSLBase {
 
 
     @Override
-    protected void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws IOException {
+    protected synchronized void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws IOException {
 
     	if(debug) System.out.println("Writing to server");
-
         send_plainData.clear();
+        System.out.println("-1");
         send_plainData.put(message);
+        System.out.println("0");
         send_plainData.flip();
+        System.out.println("1");
         while (send_plainData.hasRemaining()) {
             // The loop has a meaning for (outgoing) messages larger than 16KB.
             // Every wrap call will remove 16KB from the original message and send it to the remote peer.
         	send_encryptedData.clear();
             SSLEngineResult result = engine.wrap(send_plainData, send_encryptedData);
+            System.out.println("2");
             switch (result.getStatus()) {
             case OK:
             	send_encryptedData.flip();

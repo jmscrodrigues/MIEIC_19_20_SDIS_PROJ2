@@ -57,6 +57,12 @@ public class PeerMessageHandler implements Runnable {
 				toSend = this.peer.remove(key).getBytes();
 				break;
 			}
+			case PeerOps.BACKUP: {
+				String file = parts[1];
+				this.peer.backup(file);
+				toSend = this.peer.backup(file).getBytes();
+				break;
+			}
 			default:
 				return;
 		}

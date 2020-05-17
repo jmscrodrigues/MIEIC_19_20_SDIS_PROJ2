@@ -54,7 +54,7 @@ public class TestApp {
 
 	private String initiateOperation() {
 		String toSend = null;
-
+		
 		switch (op.toUpperCase()) {
 			case PeerOps.PUT: {
 				if (args.length != 4) {
@@ -75,6 +75,18 @@ public class TestApp {
 					System.exit(-1);
 				}
 
+				String key = args[2];
+
+				toSend = op + " " + key;
+				break;
+			}
+			case PeerOps.BACKUP: {
+				
+				if (args.length != 3) {
+					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename>");
+					System.exit(-1);
+				}
+				
 				String key = args[2];
 
 				toSend = op + " " + key;

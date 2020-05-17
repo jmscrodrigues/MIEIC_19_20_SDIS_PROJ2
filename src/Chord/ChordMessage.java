@@ -1,6 +1,7 @@
 package Chord;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class ChordMessage {
 
@@ -11,12 +12,13 @@ public class ChordMessage {
     public String ip;
     public int port;
     public int index;
+    
 
     public ChordMessage(byte[] buf) {
         this.buf = buf;
 
         String message = new String(buf, StandardCharsets.UTF_8);
-        System.out.println(message);
+        System.out.println("TO HANDLE " + message);
 
         String[] parts = message.split(" ");
 
@@ -42,4 +44,5 @@ public class ChordMessage {
         if (parts.length > 4)
             this.index = Integer.parseInt(parts[4]);
     }
+    
 }

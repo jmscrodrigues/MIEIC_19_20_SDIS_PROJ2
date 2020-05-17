@@ -66,7 +66,7 @@ public class SSLMessageHandler implements Runnable{
 				int key = Integer.parseInt(parts[1]);
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
-				this.chord.find_successor(key, ip, port, -1);
+				this.chord.find_successor(key, ip, port);
 				break;
 			}
 			case ChordOps.PUT: {

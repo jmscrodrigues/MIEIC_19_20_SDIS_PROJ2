@@ -24,20 +24,20 @@ public class ChordMessageHandler implements Runnable {
 		switch (message.op) {
 			case ChordOps.GET_SUCCESSOR: {
 				try {
-					this.chord.find_successor(message.key, message.ip, message.port, -1);
+					this.chord.find_successor(message.key, message.ip, message.port);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				break;
 			}
-			case ChordOps.FIND_FINGER: {
+			/*case ChordOps.FIND_FINGER: {
 				try {
 					this.chord.find_successor(message.key, message.ip, message.port, message.index);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				break;
-			}
+			}*/
 			case ChordOps.SET_FINGER: {
 				this.chord.setFinger(message.index, new InetSocketAddress(message.ip, message.port));
 				//System.out.println("SETFINGER_RECEIVED");

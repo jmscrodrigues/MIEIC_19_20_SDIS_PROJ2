@@ -2,6 +2,7 @@ package Peer;
 
 import Chord.Chord;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -39,6 +40,11 @@ public class Peer {
 		
 		this.scheduler_executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
 		this.chord = new Chord(this, chord_port);
+		
+		File directory = new File("./peer" + this.chord.getKey());
+		if (!directory.exists()){
+	        directory.mkdir();
+	    }
 
 		try {
 			serverSocket = new ServerSocket(server_port);
@@ -69,6 +75,26 @@ public class Peer {
 	public String remove(String key) {
 		byte[] ret = this.chord.remove(key);
 		return new String(ret, StandardCharsets.UTF_8);
+	}
+	
+	public String backup(String file_name) {
+		
+		FileInfo file = new FileInfo(file_name, 1);
+        if(file.doesFileExists() == false) {
+        	return "File " + file_name +" not found";
+        }        
+        for(int i = 0; i < file.getNumberOfParts(); i++) {
+        	this.chord.put(file_name + "_" + i, file.getFilePart(i));
+        	System.out.println(i);
+        	try{
+				Thread.sleep(1000);
+			}catch(Exception e) {
+	        	System.out.println(e);
+	        }  
+        }
+        
+        
+        return "Backup with sucess";
 	}
 	
 	public ServerSocket getServerSocket() {
