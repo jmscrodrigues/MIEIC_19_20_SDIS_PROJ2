@@ -16,12 +16,12 @@ public class PeerServer implements Runnable{
 	
 	@Override
 	public void run() {
-		ScheduledThreadPoolExecutor scheduler_executer = this.peer.getExecuter();
+		ScheduledThreadPoolExecutor scheduler_executor = this.peer.getExecutor();
 		ServerSocket server = this.peer.getServerSocket();
 		while (true) {
             try {
             	
-            	scheduler_executer.execute(new PeerMessageHandler(this.peer,server.accept()));
+            	scheduler_executor.execute(new PeerMessageHandler(this.peer,server.accept()));
                 
             } catch (IOException e) {
             	if(server.isClosed())

@@ -20,7 +20,7 @@ public class ServerThread extends SSLServer implements Runnable {
 	@Override
     public void start() throws Exception {
 		
-		ScheduledThreadPoolExecutor scheduler_executer = this.chord.getPeer().getExecuter();
+		ScheduledThreadPoolExecutor scheduler_executor = this.chord.getPeer().getExecutor();
 
     	if(debug) System.out.println("SSLServer initialized");
 
@@ -38,7 +38,7 @@ public class ServerThread extends SSLServer implements Runnable {
                 } else if (k.isReadable()) {
                 	SocketChannel sc = (SocketChannel) k.channel();
                 	SSLEngine eng = (SSLEngine) k.attachment();
-                    scheduler_executer.execute(new SSLMessageHandler(this,this.chord,sc,eng,read(sc, eng)));
+                    scheduler_executor.execute(new SSLMessageHandler(this,this.chord,sc,eng,read(sc, eng)));
                 	//read(sc, eng);
                 	//write(sc, eng, "Hello! I am your server!");
                 }

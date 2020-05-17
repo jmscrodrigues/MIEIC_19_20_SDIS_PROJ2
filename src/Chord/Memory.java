@@ -1,13 +1,10 @@
 package Chord;
+
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Memory {
     
-    private ConcurrentHashMap<Integer,byte[]> data = new ConcurrentHashMap<Integer,byte[]>();
+    private ConcurrentHashMap<Integer,byte[]> data = new ConcurrentHashMap<>();
 
     public Memory() {
     }

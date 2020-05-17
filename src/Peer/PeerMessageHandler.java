@@ -1,14 +1,8 @@
 package Peer;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-
-import Chord.Chord;
 
 public class PeerMessageHandler implements Runnable{
 	Peer peer;
@@ -52,7 +46,7 @@ public class PeerMessageHandler implements Runnable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-	    	toSend = new String("Put with sucess").getBytes();
+	    	toSend = "Put with success".getBytes();
 	    }else if(op.equals("GET")) {
 	    	String key = parts[1];
 	    	try {
