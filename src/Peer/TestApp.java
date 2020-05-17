@@ -1,5 +1,7 @@
 package Peer;
 
+import Chord.ChordOps;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -36,20 +38,16 @@ public class TestApp {
 
 
 		switch (op) {
-			case "PUT": {
+			case ChordOps.PUT: {
 				String key = args[2];
 				String value = args[3];
-				toSend = "PUT " + key + " " + value;
+				toSend = ChordOps.PUT + key + " " + value;
 				break;
 			}
-			case "GET": {
+			case ChordOps.GET: //because same code
+			case ChordOps.REMOVE: {
 				String key = args[2];
-				toSend = "GET " + key;
-				break;
-			}
-			case "REMOVE": {
-				String key = args[2];
-				toSend = "REMOVE " + key;
+				toSend = op + key;
 				break;
 			}
 			default: {

@@ -5,14 +5,14 @@ public interface ChordOps {
     String FIND_FINGER = "FINDFINGER";
     String SET_FINGER = "SETFINGER";
     String SET_SUCCESSOR = "SETSUCCESSOR";
-    String SET_PREDECCESSOR = "SETPREDECCESSOR";
+    String SET_PREDECESSOR = "SETPREDECESSOR";
     String NEW_FINGER = "NEWFINGER";
     String DELETE_FINGER = "DELETEFINGER";
     String LOOKUP = "LOOKUP";
     String PUT = "PUT";
     String GET = "GET";
     String GET_DATA = "GETDATA";
-    String GET_PREDECCESSOR = "GETPREDECESSOR";
+    String GET_PREDECESSOR = "GETPREDECESSOR";
     String NOTIFY = "NOTIFY";
     String REMOVE = "REMOVE";
 }

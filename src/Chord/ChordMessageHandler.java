@@ -47,7 +47,7 @@ public class ChordMessageHandler implements Runnable {
 				this.chord.setSuccessor(new InetSocketAddress(message.ip, message.port));
 				break;
 			}
-			case ChordOps.SET_PREDECCESSOR: {
+			case ChordOps.SET_PREDECESSOR: {
 				this.chord.setPredecessor(new InetSocketAddress(message.ip, message.port));
 				break;
 			}
@@ -103,12 +103,12 @@ public class ChordMessageHandler implements Runnable {
 				}
 				break;
 			}
-			case ChordOps.GET_PREDECCESSOR: {
+			case ChordOps.GET_PREDECESSOR: {
 				InetSocketAddress pre = this.chord.getPredecessor();
 				//Message out = new Message("PREDECESSOR " + pre.getHostName() + " " + pre.getPort());
 				//out.sendMessage(socket);
 				System.out.println("Sending Predecessor");
-				writeToSocket("PREDECCESSOR " + pre.getHostName() + " " + pre.getPort());
+				writeToSocket("PREDECESSOR " + pre.getHostName() + " " + pre.getPort());
 				break;
 			}
 			case ChordOps.NOTIFY: {

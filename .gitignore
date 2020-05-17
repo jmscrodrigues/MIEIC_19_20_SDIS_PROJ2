@@ -1,11 +1,6 @@
 /bin/
 
 *.class
-<<<<<<< HEAD
 /SSL/*
 *.iml
 .idea/
-=======
-.idea/
-*.iml
->>>>>>> master
