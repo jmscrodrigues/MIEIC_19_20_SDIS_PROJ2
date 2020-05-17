@@ -46,9 +46,9 @@ public class SSLMessage extends SSLBase {
         engine.setUseClientMode(true);
 
         SSLSession session = engine.getSession();
-        send_plainData = ByteBuffer.allocate(1024);
+        send_plainData = ByteBuffer.allocate(64000 + 50);
         send_encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
-        rcv_plainData = ByteBuffer.allocate(1024);
+        rcv_plainData = ByteBuffer.allocate(64000 + 50);
         rcv_encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
         
         try {
@@ -105,17 +105,15 @@ public class SSLMessage extends SSLBase {
 
     	if(debug) System.out.println("Writing to server");
         send_plainData.clear();
-        System.out.println("-1");
+        System.out.println("message length: " +  message.length);
+        System.out.println("buffer length: " + send_plainData.capacity());
         send_plainData.put(message);
-        System.out.println("0");
         send_plainData.flip();
-        System.out.println("1");
         while (send_plainData.hasRemaining()) {
             // The loop has a meaning for (outgoing) messages larger than 16KB.
             // Every wrap call will remove 16KB from the original message and send it to the remote peer.
         	send_encryptedData.clear();
             SSLEngineResult result = engine.wrap(send_plainData, send_encryptedData);
-            System.out.println("2");
             switch (result.getStatus()) {
             case OK:
             	send_encryptedData.flip();

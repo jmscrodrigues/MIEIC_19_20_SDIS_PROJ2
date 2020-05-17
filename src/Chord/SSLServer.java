@@ -69,12 +69,13 @@ public class SSLServer extends SSLBase{
     }
 
     @Override
-    protected synchronized byte[] read(SocketChannel sC, SSLEngine eng) throws IOException {
+    protected synchronized byte[] read(SocketChannel socket, SSLEngine eng) throws IOException {
 
     	if(debug) System.out.println("Will read from a client");
-    	byte[] data = null;
+    	byte[] data = new byte[64100];
+    	int bytes_read = 0;
         rcv_encryptedData.clear();
-        int bytesRead = sC.read(rcv_encryptedData);
+        int bytesRead = socket.read(rcv_encryptedData);
         if (bytesRead > 0) {
             rcv_encryptedData.flip();
             while (rcv_encryptedData.hasRemaining()) {
@@ -83,8 +84,11 @@ public class SSLServer extends SSLBase{
                 switch (res.getStatus()) {
                 case OK:
                     rcv_plainData.flip();
-                    data = Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced()); 
-                    System.out.println("Message: " + new String(data));
+                    //System.out.println("aquiiiiii");
+                    //data = Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced()); 
+                    System.arraycopy(rcv_plainData.array(), 0, data, bytes_read, res.bytesProduced());
+                    bytes_read +=res.bytesProduced();
+                    //System.out.println("Message: " + new String(data));
                     break;
                 case BUFFER_OVERFLOW:
                     rcv_plainData = enlargeApplicationBuffer(eng, rcv_plainData);
@@ -94,7 +98,7 @@ public class SSLServer extends SSLBase{
                     break;
                 case CLOSED:
                 	if(debug) System.out.println("Client wants to close connection");
-                    closeConnection(sC, eng);
+                    closeConnection(socket, eng);
                     if(debug) System.out.println("Connection closed");
                     return data;
                 default:
@@ -105,10 +109,11 @@ public class SSLServer extends SSLBase{
             //write(sC, eng, "Hello! I am your server!");
 
         } else if (bytesRead < 0) {
-            handleEndOfStream(sC, eng);
+            handleEndOfStream(socket, eng);
             if(debug) System.out.println("Goodbye client!");
+            return null;
         }
-        return data;
+        return Arrays.copyOfRange(data, 0, bytes_read);
     }
 
     public void write(SocketChannel sC, SSLEngine eng, String message) throws IOException {

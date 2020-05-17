@@ -25,7 +25,7 @@ public class FileInfo {
 	
 	private void fileDivision() {
 
-        int divSize = 1100;
+        int divSize = 64000;
         byte[] buf = new byte[divSize];
 
         try (FileInputStream inputStream = new FileInputStream(this.file);
