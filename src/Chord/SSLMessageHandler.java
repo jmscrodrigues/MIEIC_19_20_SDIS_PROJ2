@@ -41,11 +41,7 @@ public class SSLMessageHandler implements Runnable{
 			case ChordOps.LOOKUP: {
 				int key = Integer.parseInt(parts[1].replaceAll("\\D", ""));
 				InetSocketAddress ret = null;
-				try {
-					ret = this.chord.lookup(key);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				ret = this.chord.lookup(key);
 				if (ret != null)
 					toSend = ("LOOKUPRET " + this.chord.getName() + " " + this.chord.getPort() + " " + ret.getHostName() + " " + ret.getPort()).getBytes();
 				else
@@ -70,11 +66,7 @@ public class SSLMessageHandler implements Runnable{
 				int key = Integer.parseInt(parts[1]);
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
-				try {
-					this.chord.find_successor(key, ip, port, -1);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				this.chord.find_successor(key, ip, port, -1);
 				break;
 			}
 			case ChordOps.PUT: {
@@ -100,12 +92,7 @@ public class SSLMessageHandler implements Runnable{
 				int key = Integer.parseInt(parts[1]);
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3]);
-				try {
-					this.chord.sendData(key, ip, port);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				this.chord.sendData(key, ip, port);
 				break;
 			}
 			case ChordOps.DELETE_FINGER: {
@@ -114,12 +101,7 @@ public class SSLMessageHandler implements Runnable{
 				String ip = parts[3];
 				int port = Integer.parseInt(parts[4]);
 				this.chord.deleteFinger(oldKey, new InetSocketAddress(ip, port));
-				try {
-					this.chord.sendNotifyDeleteFinger(exitKey, oldKey, ip, port);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				this.chord.sendNotifyDeleteFinger(exitKey, oldKey, ip, port);
 				break;
 			}
 			case ChordOps.NEW_FINGER: {
@@ -127,12 +109,7 @@ public class SSLMessageHandler implements Runnable{
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3]);
 				this.chord.foundNewFinger(new InetSocketAddress(ip, port));
-				try {
-					this.chord.sendNotifyNewFinger(originKey, ip, port);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				this.chord.sendNotifyNewFinger(originKey, ip, port);
 				break;
 			}
 			case ChordOps.GET_PREDECESSOR:
@@ -151,7 +128,7 @@ public class SSLMessageHandler implements Runnable{
 		try {
 			this.server.write(channel, engine, toSend);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println(e);
 			e.printStackTrace();
 		}
 		

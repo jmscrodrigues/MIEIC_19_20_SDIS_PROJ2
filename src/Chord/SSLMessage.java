@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 
@@ -21,18 +22,25 @@ public class SSLMessage extends SSLBase {
 
     private SocketChannel socketChannel;
     
-    public SSLMessage(InetSocketAddress address) throws Exception {
+    public SSLMessage(InetSocketAddress address) {
     	this(address.getHostName(),address.getPort());
     }
     
-    public SSLMessage(String ip, int port) throws Exception  {
+    public SSLMessage(String ip, int port)  {
     	this.ip = ip;
     	this.port = port;
 
-        SSLContext context = SSLContext.getInstance("TLS");
-        KeyManager[] keys = createKeyManagers("./client.jks", "storepass", "keypass");
-        TrustManager[] trusts = createTrustManagers("./trustedCerts.jks", "storepass");
-        context.init(keys, trusts, null);
+        SSLContext context = null;
+		try {
+			context = SSLContext.getInstance("TLS");
+			KeyManager[] keys = createKeyManagers("./client.jks", "storepass", "keypass");
+			TrustManager[] trusts = createTrustManagers("./trustedCerts.jks", "storepass");
+			context.init(keys, trusts, null);
+		} catch (Exception e) {
+			System.out.println(e);
+			e.printStackTrace();
+		}
+        
         engine = context.createSSLEngine(ip, port);
         engine.setUseClientMode(true);
 
@@ -42,7 +50,12 @@ public class SSLMessage extends SSLBase {
         rcv_plainData = ByteBuffer.allocate(1024);
         rcv_encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
         
-        this.connect();
+        try {
+			this.connect();
+		} catch (Exception e) {
+			System.out.println(e);
+			e.printStackTrace();
+		}
         
     }
 
@@ -52,22 +65,31 @@ public class SSLMessage extends SSLBase {
     	socketChannel.connect(new InetSocketAddress(this.ip, this.port));
     	
     	while (!socketChannel.finishConnect()) {
-    		// can do something here...
     	}
 
     	engine.beginHandshake();
     	return doHandshake(socketChannel, engine);
     }
 
-    public void write(String message) throws IOException {
-        write(socketChannel, engine, message.getBytes());
+    public void write(String message) {
+        try {
+			write(socketChannel, engine, message.getBytes());
+		} catch (IOException e) {
+			System.out.println(e);
+			e.printStackTrace();
+		}
     }
     
-    public void write(byte[] message) throws IOException {
-        write(socketChannel, engine, message);
+    public void write(byte[] message) {
+        try {
+			write(socketChannel, engine, message);
+		} catch (IOException e) {
+			System.out.println(e);
+			e.printStackTrace();
+		}
     }
     
-    public void write(String d, byte [] body) throws IOException{
+    public void write(String d, byte [] body){
 		String header = d + " " + CRLF + CRLF;
 		byte[] headerB = header.getBytes();
 		byte [] data = new byte[headerB.length + body.length];
@@ -112,8 +134,14 @@ public class SSLMessage extends SSLBase {
         }
     }
 
-    public byte[] read() throws Exception {
-        return read(socketChannel, engine);
+    public byte[] read() {
+        try {
+			return read(socketChannel, engine);
+		} catch (Exception e) {
+			System.out.println(e);
+			e.printStackTrace();
+		}
+        return null;
     }
 
     @Override
@@ -162,9 +190,14 @@ public class SSLMessage extends SSLBase {
         return data;
     }
 
-    public void close() throws IOException {
+    public void close() {
     	if(debug) System.out.println("About to close connection with the server...");
-        closeConnection(socketChannel, engine);
+        try {
+			closeConnection(socketChannel, engine);
+		} catch (IOException e) {
+			System.out.println(e);
+			e.printStackTrace();
+		}
         executor.shutdown();
         if(debug) System.out.println("Goodbye!");
     }

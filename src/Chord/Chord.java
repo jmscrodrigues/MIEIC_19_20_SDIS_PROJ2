@@ -67,7 +67,7 @@ public class Chord {
         
     }
 	
-	public void joinRing(InetSocketAddress peer) throws Exception {
+	public void joinRing(InetSocketAddress peer) {
 
 		this.access_peer = peer;
 		
@@ -96,7 +96,7 @@ public class Chord {
 		
 	}
 	
-	public void leaveRing() throws Exception {
+	public void leaveRing() {
 		System.out.println("Started leaving process");
 		
 		if(this.successor != null && this.predecessor != null) {
@@ -142,7 +142,7 @@ public class Chord {
 	 * @param type: -1-> Node joining  >=0: Updating fingerTable of index type
 	 * @throws Exception
 	 */
-	public void find_successor(int key, String ip, int port, int type) throws Exception { 
+	public void find_successor(int key, String ip, int port, int type) { 
 		System.out.println("a");
 		//se nao existir successor, significa que � o unico na rede
 		if(this.successor == null) {
@@ -206,7 +206,7 @@ public class Chord {
 		}
 	}	
 	
-	public InetSocketAddress lookup(int key) throws Exception {
+	public InetSocketAddress lookup(int key) {
 
 		if(this.successor == null) {
 
@@ -224,7 +224,7 @@ public class Chord {
 		}
 	}
 	
-	public void put	(String identifier, byte[] data) throws Exception {
+	public void put	(String identifier, byte[] data) {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
 		SSLMessage m = new SSLMessage(dest);
@@ -233,7 +233,7 @@ public class Chord {
 		m.close();
 	}
 	
-	public byte[] get(String identifier) throws Exception {
+	public byte[] get(String identifier) {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
 		SSLMessage m = new SSLMessage(dest);
@@ -243,7 +243,7 @@ public class Chord {
 		return data;
 	}
 	
-	public byte[] remove(String identifier) throws Exception {
+	public byte[] remove(String identifier) {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
 		SSLMessage m = new SSLMessage(dest);
@@ -268,7 +268,7 @@ public class Chord {
 	/*
 	 * Send data to node that has just joined
 	 */
-	public void sendData(int key, String ip, int port) throws Exception {
+	public void sendData(int key, String ip, int port) {
 		InetSocketAddress pre = new InetSocketAddress(ip,port);
 		ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
 		SSLMessage m = new SSLMessage(pre);
@@ -286,7 +286,7 @@ public class Chord {
 	/*
 	 * Get predecessor of node passed as argument
 	 */
-	public InetSocketAddress getPredecessor(InetSocketAddress node) throws Exception {
+	public InetSocketAddress getPredecessor(InetSocketAddress node) {
 		SSLMessage m = new SSLMessage(this.successor);
 		m.write(ChordOps.GET_PREDECESSOR + " " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 		byte [] buf = m.read();
@@ -308,7 +308,7 @@ public class Chord {
 	}
 	
 	
-	public void stabilize() throws Exception {
+	public void stabilize() {
 		if(this.successor == null)
 			return;
 		InetSocketAddress x = this.getPredecessor(this.successor);
@@ -339,7 +339,7 @@ public class Chord {
 		this.printFingerTable();
 	}
 	
-	public void sendNotifyNewFinger(int originKey , String ip, int port) throws Exception {
+	public void sendNotifyNewFinger(int originKey , String ip, int port) {
 		int pred_key = this.hash(this.predecessor);
 		
 		System.out.println(this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M)) + "  " + originKey + " " + pred_key);
@@ -353,7 +353,7 @@ public class Chord {
 		System.out.println("Sent new finger to predecessor");
 	}
 	
-	public void sendNotifyDeleteFinger(int originKey , int oldKey, String ip, int port) throws Exception {
+	public void sendNotifyDeleteFinger(int originKey , int oldKey, String ip, int port) {
 		if(this.predecessor == null)
 			return;
 		int pred_key = this.hash(this.predecessor);
@@ -370,7 +370,7 @@ public class Chord {
 		System.out.println("Sent new delete to predecessor");
 	}
 	
-	public void updateFingerTable() throws Exception {
+	public void updateFingerTable() {
 		System.out.println("Going to update fingers");
 		InetSocketAddress finger = null;
 		for(int i = 0; i < M; i++) {
@@ -381,7 +381,7 @@ public class Chord {
 		}
 	}
 	
-	public void fix_fingers() throws Exception {
+	public void fix_fingers() {
 		if(this.nextFinger == M)
 			this.nextFinger = 0;
 		int index = this.positiveModule((int) (this.key + Math.pow(2, this.nextFinger)), (int)  Math.pow(2, M));

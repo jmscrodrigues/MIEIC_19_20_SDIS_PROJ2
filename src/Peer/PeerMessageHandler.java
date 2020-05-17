@@ -44,30 +44,18 @@ public class PeerMessageHandler implements Runnable{
 			case ChordOps.PUT: {
 				String key = parts[1];
 				String value = parts[2];
-				try {
-					this.peer.put(key, value);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				this.peer.put(key, value);
 				toSend = ("Put with success").getBytes();
 				break;
 			}
 			case ChordOps.GET: {
 				String key = parts[1];
-				try {
-					toSend = this.peer.get(key).getBytes();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				toSend = this.peer.get(key).getBytes();
 				break;
 			}
 			case ChordOps.REMOVE: {
 				String key = parts[1];
-				try {
-					toSend = this.peer.remove(key).getBytes();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				toSend = this.peer.remove(key).getBytes();
 				break;
 			}
 			default:

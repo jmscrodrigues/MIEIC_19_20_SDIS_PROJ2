@@ -27,38 +27,27 @@ public class Peer {
 			System.err.println("Could not create the server socket");
 			e.printStackTrace();
 			System.exit(-1);
-
 		}
 
 		this.scheduler_executor.execute(new PeerServer(this));
 
 		if (access_peer != null)
-			try {
 				this.chord.joinRing(access_peer);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
 
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			try {
-				chord.leaveRing();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}));
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {chord.leaveRing();}));
 
 	}
 	
-	public String put(String key, String value) throws Exception {
+	public String put(String key, String value) {
 		this.chord.put(key, value.getBytes());
 		return "Inserted with success";
 	}
 	
-	public String get(String key) throws Exception {
+	public String get(String key) {
 		byte[] ret = this.chord.get(key);
 		return new String(ret, StandardCharsets.UTF_8);
 	}
-	public String remove(String key) throws Exception {
+	public String remove(String key) {
 		byte[] ret = this.chord.remove(key);
 		return new String(ret, StandardCharsets.UTF_8);
 	}
