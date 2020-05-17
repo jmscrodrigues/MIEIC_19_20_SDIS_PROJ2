@@ -5,15 +5,36 @@ import Chord.ChordOps;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class TestApp {
 
+	private final String peer_ip;
+	private final int peer_port;
+	private final String op;
+	private final String[] args;
+
+	private Socket peer_socket;
+
+	public TestApp(String peer_ip, int peer_port, String op, String[] args) {
+		this.peer_ip = peer_ip;
+		this.peer_port = peer_port;
+		this.op = op;
+		this.args = args;
+	}
+
+	private void openPeerSocket() {
+		try {
+			this.peer_socket = new Socket(this.peer_ip, this.peer_port);
+		} catch (IOException e) {
+			System.err.println("Could not connect to peer");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
+
 	public static void main(String[] args) {
-		
 		if (args.length < 3) {
 			System.out.println("Usage: TestApp <peer_ip>:<peer_port> op [args]");
 			System.exit(0);
@@ -22,73 +43,78 @@ public class TestApp {
 		String[] ip_ports = args[0].split(":");
 		String ip = ip_ports[0];
 		int port = Integer.parseInt(ip_ports[1]);
-		
-		Socket socket = null;
-		try {
-			socket = new Socket(ip, port);
-        } catch (IOException e) {
-            System.err.println("Could not connect to peer");
-            e.printStackTrace();
-            System.exit(-1);
-        }
-		
-		String op = args[1];
-		
+
+		TestApp testApp = new TestApp(ip, port, args[1], args);
+
+		testApp.openPeerSocket();
+		String response = testApp.initiateOperation();
+
+		System.out.println(response);
+	}
+
+	private String initiateOperation() {
 		String toSend = null;
 
+		switch (op.toUpperCase()) {
+			case PeerOps.PUT: {
+				if (args.length != 4) {
+					System.out.println("Usage: TestApp <peer_ip>:<peer_port> PUT <key> <value>");
+					System.exit(0);
+				}
 
-		switch (op) {
-			case ChordOps.PUT: {
 				String key = args[2];
 				String value = args[3];
+
 				toSend = ChordOps.PUT + " " + key + " " + value;
 				break;
 			}
-			case ChordOps.GET: //because same code
-			case ChordOps.REMOVE: {
+			case PeerOps.GET:
+			case PeerOps.REMOVE: {
+				if (args.length != 3) {
+					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <key>");
+					System.exit(-1);
+				}
+
 				String key = args[2];
+
 				toSend = op + " " + key;
 				break;
 			}
 			default: {
-				System.out.print("Not a valid operation\n");
-				return;
+				System.err.print("Not a valid operation\n");
+				System.exit(-1);
 			}
-
 		}
-		
+
 		byte[] message = toSend.getBytes();
 		try {
-			OutputStream out = socket.getOutputStream(); 
-		    DataOutputStream dos = new DataOutputStream(out);
-		    dos.writeInt(message.length);
-		    dos.write(message,0,message.length);
+			DataOutputStream dos = new DataOutputStream(peer_socket.getOutputStream());
+			dos.writeInt(message.length);
+			dos.write(message,0,message.length);
 		} catch(IOException e) {
 			System.err.println("Error sending message.");
-            e.printStackTrace();
-            System.exit(-1);
+			e.printStackTrace();
+			System.exit(-1);
 		}
-		
+
 		byte[] buf = null;
 		try {
-			InputStream in = socket.getInputStream();
-		    DataInputStream dis = new DataInputStream(in);
-		    int len = dis.readInt();
-		    buf = new byte[len];
-		    if (len > 0) {
-		        dis.readFully(buf);
-		    }
-		    socket.close();
+			DataInputStream dis = new DataInputStream(peer_socket.getInputStream());
+			int len = dis.readInt();
+			buf = new byte[len];
+			if (len > 0)
+				dis.readFully(buf);
+
+			peer_socket.close();
+
 		} catch(IOException e) {
-            e.printStackTrace();
+			e.printStackTrace();
 			System.err.println("Error reading message!");
-            System.exit(-1);
+			System.exit(-1);
 		}
-		
-		String received = new String(buf, StandardCharsets.UTF_8);
-		
-		System.out.println(received);
+
+		return new String(buf, StandardCharsets.UTF_8);
 	}
-	
-	
+
+
 }

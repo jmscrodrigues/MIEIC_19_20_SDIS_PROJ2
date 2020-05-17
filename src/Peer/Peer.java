@@ -11,10 +11,29 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class Peer {
 
-	
 	private final Chord chord;
 	private ServerSocket serverSocket;
     private final ScheduledThreadPoolExecutor scheduler_executor;
+
+	public static void main(String[] args) {
+		if (args.length != 2 && args.length != 3) {
+			System.out.println("Usage: Peer <peer_port> <chord_port> [<peer_ip>:<peer_port>]");
+			System.exit(0);
+		}
+
+		int serve_port = Integer.parseInt(args[0]);
+		int chord_port = Integer.parseInt(args[1]);
+		InetSocketAddress access_peer = null;
+
+		if (args.length == 3) {
+			String[] parts = args[2].split(":");
+			access_peer = new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
+		}
+
+		Peer peer = new Peer(serve_port, chord_port, access_peer);
+
+		System.out.println("Hello world");
+	}
 
 	Peer(int server_port, int chord_port, InetSocketAddress access_peer) {
 		
@@ -32,10 +51,9 @@ public class Peer {
 		this.scheduler_executor.execute(new PeerServer(this));
 
 		if (access_peer != null)
-				this.chord.joinRing(access_peer);
+			this.chord.joinRing(access_peer);
 
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {chord.leaveRing();}));
-
+		Runtime.getRuntime().addShutdownHook(new Thread(chord::leaveRing));
 	}
 	
 	public String put(String key, String value) {
@@ -47,6 +65,7 @@ public class Peer {
 		byte[] ret = this.chord.get(key);
 		return new String(ret, StandardCharsets.UTF_8);
 	}
+
 	public String remove(String key) {
 		byte[] ret = this.chord.remove(key);
 		return new String(ret, StandardCharsets.UTF_8);
@@ -58,27 +77,6 @@ public class Peer {
 	
 	public ScheduledThreadPoolExecutor getExecutor() {
 		return this.scheduler_executor;
-	}
-	
-	public static void main(String[] args) {
-
-		if (args.length != 2 && args.length != 3) {
-			System.out.println("Usage: Peer <peer_port> <chord_port> [<peer_ip>:<peer_port>]");
-			System.exit(0);
-		}
-		
-		int serve_port = Integer.parseInt(args[0]);
-		int chord_port = Integer.parseInt(args[1]);
-		InetSocketAddress access_peer = null;
-		
-		if(args.length == 3) {
-			String[] parts = args[2].split(":");
-			access_peer = new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
-		}
-		
-		Peer peer = new Peer(serve_port, chord_port, access_peer);
-
-		System.out.println("Hello world");
 	}
 
 }

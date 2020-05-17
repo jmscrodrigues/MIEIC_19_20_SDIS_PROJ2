@@ -28,7 +28,7 @@ public class Memory {
         return data.remove(fileId);
     }
     
-    public ConcurrentHashMap<Integer,byte[]> getData(){
+    public ConcurrentHashMap<Integer, byte[]> getData(){
     	return this.data;
     }
 }

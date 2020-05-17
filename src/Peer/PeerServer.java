@@ -20,8 +20,7 @@ public class PeerServer implements Runnable{
 		while (true) {
 
             try {
-            	
-            	scheduler_executor.execute(new PeerMessageHandler(this.peer,server.accept()));
+            	scheduler_executor.execute(new PeerMessageHandler(this.peer, server.accept()));
                 
             } catch (IOException e) {
             	if(server.isClosed())
