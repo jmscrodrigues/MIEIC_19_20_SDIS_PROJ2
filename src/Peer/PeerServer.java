@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-
 public class PeerServer implements Runnable{
-	
 
-	private Peer peer;
+	private final Peer peer;
 	
 	PeerServer(Peer p){
 		this.peer = p;
@@ -18,7 +16,9 @@ public class PeerServer implements Runnable{
 	public void run() {
 		ScheduledThreadPoolExecutor scheduler_executor = this.peer.getExecutor();
 		ServerSocket server = this.peer.getServerSocket();
+
 		while (true) {
+
             try {
             	
             	scheduler_executor.execute(new PeerMessageHandler(this.peer,server.accept()));

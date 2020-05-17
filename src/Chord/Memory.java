@@ -4,11 +4,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Memory {
     
-    private ConcurrentHashMap<Integer,byte[]> data = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Integer, byte[]> data = new ConcurrentHashMap<>();
 
     public Memory() {
     }
-
 
     public byte[] get(int fileId) {
         return data.get(fileId);
@@ -16,7 +15,6 @@ public class Memory {
 
     public void put(int fileId, byte[] chunk) {
     	data.put(fileId, chunk);
-        return;
     }
 
     /*

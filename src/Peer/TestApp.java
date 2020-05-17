@@ -9,11 +9,10 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class TestApp {
-	
-	
+
 	public static void main(String[] args) {
 		
-		if(args.length <3) {
+		if (args.length < 3) {
 			System.out.println("Usage: TestApp <peer_ip>:<peer_port> op [args]");
 			System.exit(0);
 		}
@@ -27,13 +26,14 @@ public class TestApp {
 			socket = new Socket(ip, port);
         } catch (IOException e) {
             System.err.println("Could not connect to peer");
-            System.err.println(e);
+            e.printStackTrace();
             System.exit(-1);
         }
 		
 		String op = args[1];
 		
 		String toSend = null;
+
 
 		switch (op) {
 			case "PUT": {
@@ -52,6 +52,11 @@ public class TestApp {
 				toSend = "REMOVE " + key;
 				break;
 			}
+			default: {
+				System.out.print("Not a valid operation\n");
+				return;
+			}
+
 		}
 		
 		byte[] message = toSend.getBytes();
@@ -60,9 +65,8 @@ public class TestApp {
 		    DataOutputStream dos = new DataOutputStream(out);
 		    dos.writeInt(message.length);
 		    dos.write(message,0,message.length);
-		}catch(IOException e) {
+		} catch(IOException e) {
 			System.err.println("Error sending message.");
-            System.err.println(e);
             e.printStackTrace();
             System.exit(-1);
 		}
@@ -77,20 +81,15 @@ public class TestApp {
 		        dis.readFully(buf);
 		    }
 		    socket.close();
-		}catch(IOException e) {
+		} catch(IOException e) {
             e.printStackTrace();
 			System.err.println("Error reading message!");
-            System.err.println(e);
-            e.printStackTrace();
             System.exit(-1);
 		}
 		
 		String received = new String(buf, StandardCharsets.UTF_8);
 		
 		System.out.println(received);
-		
-		
-		return;
 	}
 	
 	

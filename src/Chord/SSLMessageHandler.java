@@ -38,7 +38,7 @@ public class SSLMessageHandler implements Runnable{
 	    String op = parts[0];
 
 		switch (op) {
-			case "LOOKUP": {
+			case ChordOps.LOOKUP: {
 				int key = Integer.parseInt(parts[1].replaceAll("\\D", ""));
 				InetSocketAddress ret = null;
 				try {
@@ -52,21 +52,21 @@ public class SSLMessageHandler implements Runnable{
 					toSend = "ERROR".getBytes();
 				break;
 			}
-			case "SETSUCCESSOR": {
+			case ChordOps.SET_SUCCESSOR: {
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
 				InetSocketAddress successor = new InetSocketAddress(ip, port);
 				this.chord.setSuccessor(successor);
 				break;
 			}
-			case "SETPREDECESSOR": {
+			case ChordOps.SET_PREDECCESSOR: {
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
 				InetSocketAddress successor = new InetSocketAddress(ip, port);
 				this.chord.setPredecessor(successor);
 				break;
 			}
-			case "GETSUCCESSOR": {
+			case ChordOps.GET_SUCCESSOR: {
 				int key = Integer.parseInt(parts[1]);
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
@@ -77,13 +77,13 @@ public class SSLMessageHandler implements Runnable{
 				}
 				break;
 			}
-			case "PUT": {
+			case ChordOps.PUT: {
 				int key = Integer.parseInt(parts[1]);
 				this.getHeaderAndBody();
 				this.chord.putInMemory(key, body);
 				break;
 			}
-			case "GET": {
+			case ChordOps.GET: {
 				int key = Integer.parseInt(parts[1]);
 				toSend = this.chord.getInMemory(key);
 				if (toSend == null) {
@@ -91,12 +91,12 @@ public class SSLMessageHandler implements Runnable{
 				}
 				break;
 			}
-			case "REMOVE": {
+			case ChordOps.REMOVE: {
 				int key = Integer.parseInt(parts[1]);
 				toSend = this.chord.removeInMemory(key);
 				break;
 			}
-			case "GETDATA": {
+			case ChordOps.GET_DATA: {
 				int key = Integer.parseInt(parts[1]);
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3]);
@@ -108,7 +108,7 @@ public class SSLMessageHandler implements Runnable{
 				}
 				break;
 			}
-			case "DELETEFINGER": {
+			case ChordOps.DELETE_FINGER: {
 				int exitKey = Integer.parseInt(parts[1]);
 				int oldKey = Integer.parseInt(parts[2]);
 				String ip = parts[3];
@@ -122,7 +122,7 @@ public class SSLMessageHandler implements Runnable{
 				}
 				break;
 			}
-			case "NEWFINGER": {
+			case ChordOps.NEW_FINGER: {
 				int originKey = Integer.parseInt(parts[1]);
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3]);
@@ -135,12 +135,12 @@ public class SSLMessageHandler implements Runnable{
 				}
 				break;
 			}
-			case "GETPREDECESSOR":
+			case ChordOps.GET_PREDECCESSOR:
 				InetSocketAddress pre = this.chord.getPredecessor();
 				toSend = ("PREDECESSOR " + pre.getHostName() + " " + pre.getPort()).getBytes();
 				System.out.println("Sending Predecessor");
 				break;
-			case "NOTIFY": {
+			case ChordOps.NOTIFY: {
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3]);
 				this.chord.notify(new InetSocketAddress(ip, port));
