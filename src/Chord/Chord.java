@@ -354,6 +354,8 @@ public class Chord {
 	}
 	
 	public void sendNotifyDeleteFinger(int originKey , int oldKey, String ip, int port) throws Exception {
+		if(this.predeccessor == null)
+			return;
 		int pred_key = this.hash(this.predeccessor);
 		
 		int max_origin = this.positiveModule((int) (originKey - Math.pow(2, M-1)), (int)  Math.pow(2, M));
