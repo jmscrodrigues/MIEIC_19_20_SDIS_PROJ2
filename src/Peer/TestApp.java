@@ -41,13 +41,13 @@ public class TestApp {
 			case ChordOps.PUT: {
 				String key = args[2];
 				String value = args[3];
-				toSend = ChordOps.PUT + key + " " + value;
+				toSend = ChordOps.PUT + " " + key + " " + value;
 				break;
 			}
 			case ChordOps.GET: //because same code
 			case ChordOps.REMOVE: {
 				String key = args[2];
-				toSend = op + key;
+				toSend = op + " " + key;
 				break;
 			}
 			default: {

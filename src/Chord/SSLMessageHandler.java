@@ -79,13 +79,16 @@ public class SSLMessageHandler implements Runnable{
 				int key = Integer.parseInt(parts[1]);
 				toSend = this.chord.getInMemory(key);
 				if (toSend == null) {
-					toSend = "FAIL".getBytes();
+					toSend = "ERROR".getBytes();
 				}
 				break;
 			}
 			case ChordOps.REMOVE: {
 				int key = Integer.parseInt(parts[1]);
 				toSend = this.chord.removeInMemory(key);
+				if (toSend == null) {
+					toSend = "ERROR".getBytes();
+				}
 				break;
 			}
 			case ChordOps.GET_DATA: {
