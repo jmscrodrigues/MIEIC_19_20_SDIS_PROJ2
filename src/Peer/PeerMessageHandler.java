@@ -1,5 +1,7 @@
 package Peer;
 
+import Chord.ChordOps;
+
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -39,7 +41,7 @@ public class PeerMessageHandler implements Runnable{
 	    byte[] toSend = null;
 
 		switch (op) {
-			case "PUT": {
+			case ChordOps.PUT: {
 				String key = parts[1];
 				String value = parts[2];
 				try {
@@ -50,7 +52,7 @@ public class PeerMessageHandler implements Runnable{
 				toSend = ("Put with success").getBytes();
 				break;
 			}
-			case "GET": {
+			case ChordOps.GET: {
 				String key = parts[1];
 				try {
 					toSend = this.peer.get(key).getBytes();
@@ -59,7 +61,7 @@ public class PeerMessageHandler implements Runnable{
 				}
 				break;
 			}
-			case "REMOVE": {
+			case ChordOps.REMOVE: {
 				String key = parts[1];
 				try {
 					toSend = this.peer.remove(key).getBytes();

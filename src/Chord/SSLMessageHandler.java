@@ -59,7 +59,7 @@ public class SSLMessageHandler implements Runnable{
 				this.chord.setSuccessor(successor);
 				break;
 			}
-			case ChordOps.SET_PREDECCESSOR: {
+			case ChordOps.SET_PREDECESSOR: {
 				String ip = parts[2];
 				int port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
 				InetSocketAddress successor = new InetSocketAddress(ip, port);
@@ -135,7 +135,7 @@ public class SSLMessageHandler implements Runnable{
 				}
 				break;
 			}
-			case ChordOps.GET_PREDECCESSOR:
+			case ChordOps.GET_PREDECESSOR:
 				InetSocketAddress pre = this.chord.getPredecessor();
 				toSend = ("PREDECESSOR " + pre.getHostName() + " " + pre.getPort()).getBytes();
 				System.out.println("Sending Predecessor");

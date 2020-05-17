@@ -106,14 +106,14 @@ public class Chord {
 			SSLMessage m = new SSLMessage(this.successor);
 			ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
 			for (Entry<Integer, byte[]> entry : data.entrySet()) {
-				m.write("PUT " + entry.getKey(), entry.getValue());
+				m.write(ChordOps.PUT  + entry.getKey(), entry.getValue());
 				m.read();
 			}
 			m.close();
 			System.out.println("Transferring data to successor done");
 			
 			m = new SSLMessage(this.successor);
-			m.write(ChordOps.SET_PREDECCESSOR + " " + this.hash(predecessor) + " " + this.predecessor.getHostName() + " " +  this.predecessor.getPort());
+			m.write(ChordOps.SET_PREDECESSOR + " " + this.hash(predecessor) + " " + this.predecessor.getHostName() + " " +  this.predecessor.getPort());
 			m.read();
 			m.close();
 			
@@ -144,7 +144,7 @@ public class Chord {
 	 */
 	public void find_successor(int key, String ip, int port, int type) throws Exception { 
 		System.out.println("a");
-		//se nao existir sucessor, significa que � o unico na rede
+		//se nao existir successor, significa que � o unico na rede
 		if(this.successor == null) {
 			if(type == -1) { // se for um lookup do successor
 				InetSocketAddress new_peer = new InetSocketAddress(ip,port);
@@ -153,18 +153,18 @@ public class Chord {
 				this.setSuccessor(new_peer);
 	    		m.write(ChordOps.SET_SUCCESSOR + " " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 	    		m.read();
-	    		m.write(ChordOps.SET_PREDECCESSOR + " " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+	    		m.write(ChordOps.SET_PREDECESSOR + " " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 	    		m.read();
 	    		m.close();
 	    		this.populateFingerTable(new_peer);
 			}
 			return;
 		}
-		//se a chave que se procura estiver entre mim e o meu sucessor, logo deu hit!
+		//se a chave que se procura estiver entre mim e o meu successor, logo deu hit!
 		if(this.betweenOpenClose(this.key, this.hash(successor), key)) {
 			if(type == -1) { // se for um lookup do successor
 				SSLMessage m = new SSLMessage(this.successor);
-	    		m.write(ChordOps.SET_PREDECCESSOR + " " + key + " " + ip + " " +  port);
+	    		m.write(ChordOps.SET_PREDECESSOR + " " + key + " " + ip + " " +  port);
 	    		m.read();
 	    		m.close();
 				
@@ -177,11 +177,11 @@ public class Chord {
 				this.setSuccessor(newFinger);
 
 				m = new SSLMessage(ip, port);
-	    		m.write(ChordOps.SET_PREDECCESSOR + " " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+	    		m.write(ChordOps.SET_PREDECESSOR + " " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 	    		m.read();
 	    		m.close();
 
-	    		//novo sucessor encontrado, por isso mudar os fingers
+	    		//novo successor encontrado, por isso mudar os fingers
 	    		this.foundNewFinger(newFinger);
 	    		this.sendNotifyNewFinger(this.key, ip, port);
 	    		
@@ -189,7 +189,7 @@ public class Chord {
 				/*Message m = new Message(ChordOps.SET_FINGER + " " + this.hash(this.successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort() + " " + type);
 	    		m.sendMessage(ip, port);*/
 			}
-		} else { //se a chave estiver para la do sucessor
+		} else { //se a chave estiver para la do successor
 			InetSocketAddress closest = closest_preceding_node(key);
 			System.out.println("Closest to " + key + " is:  " + closest);
 			if(type == -1) { // se for um lookup do successor
@@ -288,7 +288,7 @@ public class Chord {
 	 */
 	public InetSocketAddress getPredecessor(InetSocketAddress node) throws Exception {
 		SSLMessage m = new SSLMessage(this.successor);
-		m.write(ChordOps.GET_PREDECCESSOR + " " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+		m.write(ChordOps.GET_PREDECESSOR + " " + this.key + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 		byte [] buf = m.read();
 		m.close();
 
