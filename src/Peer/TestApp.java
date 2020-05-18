@@ -99,6 +99,15 @@ public class TestApp {
 				toSend = op + " " + key;
 				break;
 			}
+			case PeerOps.DELETE: {
+				if (args.length != 3) {
+					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename>");
+					System.exit(-1);
+				}
+				String key = args[2];
+				toSend = op + " " + key;
+				break;
+			}
 			default: {
 				System.err.print("Not a valid operation\n");
 				System.exit(-1);

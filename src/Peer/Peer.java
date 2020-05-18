@@ -86,11 +86,6 @@ public class Peer {
         for(int i = 0; i < file.getNumberOfParts(); i++) {
         	this.chord.put(file_name + "_" + i, file.getFilePart(i));
         	System.out.println(i);
-        	try{
-				Thread.sleep(1000);
-			}catch(Exception e) {
-	        	System.out.println(e);
-	        }  
         }
         
         //TODO generate unique id thorugh hash
@@ -111,6 +106,18 @@ public class Peer {
 		}
         file.exportFile(file_name, "./peer" + this.chord.getKey() + "/");
         return "Backup with sucess";
+	}
+	public String delete(String file_name) {
+		
+		Integer numChunks = this.chord.getMemory().getFileChunks(file_name);
+		if(numChunks == null)
+			return "File not known";
+		//FileInfo file = new FileInfo(file_name, numChunks);
+		for(int i = 0; i < numChunks ; i++) {
+			byte[] ret = this.chord.remove(file_name + "_" + i);
+		}
+        this.chord.getMemory().removeBackupFile(file_name);
+        return "Deleted with sucess";
 	}
 	
 	public ServerSocket getServerSocket() {

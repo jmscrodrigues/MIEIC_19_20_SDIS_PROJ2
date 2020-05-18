@@ -15,9 +15,9 @@ public interface PeerOps {
     String GET_CHUNK = "GETCHUNK";
     String CHUNK = "CHUNK";
 
+    
+    
     String DELETE = "DELETE";
-    
-    
     
     String BACKUP = "BACKUP";
     String RESTORE = "RESTORE";

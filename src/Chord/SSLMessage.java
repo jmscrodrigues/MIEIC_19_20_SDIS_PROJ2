@@ -120,7 +120,7 @@ public class SSLMessage extends SSLBase {
                 while (send_encryptedData.hasRemaining()) {
                     socketChannel.write(send_encryptedData);
                 }
-                System.out.println("Message sent to server: " + new String(message));
+                //System.out.println("Message sent to server: " + new String(message));
                 break;
             case BUFFER_OVERFLOW:
             	send_encryptedData = enlargePacketBuffer(engine, send_encryptedData);
@@ -167,7 +167,7 @@ public class SSLMessage extends SSLBase {
                     case OK:
                     	rcv_plainData.flip();
                     	data = Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced());
-                        System.out.println("Message: " + new String(data));
+                        //System.out.println("Message: " + new String(data));
                         exit = true;
                         break;
                     case BUFFER_OVERFLOW:

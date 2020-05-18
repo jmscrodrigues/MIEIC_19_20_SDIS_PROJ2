@@ -36,7 +36,7 @@ public class SSLMessageHandler implements Runnable{
 	    //System.out.println("TO HANDLE " + message);
 	    String[] parts = message.split(" ");
 	    String op = parts[0];
-
+	    System.out.println("To handle: " + op);
 		switch (op) {
 			case ChordOps.LOOKUP: {
 				int key = Integer.parseInt(parts[1].replaceAll("\\D", ""));

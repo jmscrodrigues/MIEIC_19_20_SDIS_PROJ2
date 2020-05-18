@@ -65,7 +65,7 @@ public class Chord {
         this.successor = null;
         this.predecessor = null;
         
-        this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
+        //this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
         
         System.out.println("Chord initiated with key " + this.getKey());
         

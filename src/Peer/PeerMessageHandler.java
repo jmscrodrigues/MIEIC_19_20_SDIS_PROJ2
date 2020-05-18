@@ -67,6 +67,11 @@ public class PeerMessageHandler implements Runnable {
 				toSend = this.peer.restore(file).getBytes();
 				break;
 			}
+			case PeerOps.DELETE: {
+				String file = parts[1];
+				toSend = this.peer.delete(file).getBytes();
+				break;
+			}
 			default:
 				return;
 		}
