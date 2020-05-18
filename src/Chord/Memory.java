@@ -4,11 +4,27 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Memory {
     
-	private final ConcurrentHashMap<Integer, byte[]> data = new ConcurrentHashMap<>();
+	//private final ConcurrentHashMap<Integer, byte[]> data = new ConcurrentHashMap<>();
+	
+	/*
+	 * Files backedup by this peer
+	 */
+	private final ConcurrentHashMap<String, Integer> backupFiles = new ConcurrentHashMap<>();
+	
+	/*
+	 * chunks stored by this peer
+	 */
+	private final List<Integer> chunksStored = new ArrayList<Integer>();
 	
 	String path;
 
@@ -30,31 +46,50 @@ public class Memory {
 		return buf;
     }
 
-    public boolean put(int fileId, byte[] data) {
+    public boolean put(int chunkId, byte[] data) {
     	/*data.put(fileId, chunk);*/
-    	try (FileOutputStream fileOuputStream = new FileOutputStream(this.path + String.valueOf(fileId))) {
+    	try (FileOutputStream fileOuputStream = new FileOutputStream(this.path + String.valueOf(chunkId))) {
     		fileOuputStream.write(data);
     	}catch (IOException e) {
             e.printStackTrace();
             return false;
         }
+    	this.chunksStored.add(chunkId);
 		return true;
     }
 
     /*
         Returns data on success, null on error
     */
-    public byte[] remove(int fileId) {
+    public byte[] remove(int chunkId) {
         /*if (data.get(fileId) == null)
             return null;
         return data.remove(fileId);*/
-    	File file = new File(this.path + String.valueOf(fileId));
-    	byte[] d = this.get(fileId);
+    	File file = new File(this.path + String.valueOf(chunkId));
+    	byte[] d = this.get(chunkId);
     	file.delete();
+    	for(int i = 0; i < this.chunksStored.size();i++) {
+    		if(this.chunksStored.get(i) == chunkId) {
+    			this.chunksStored.remove(i);
+    			break;
+    		}
+    	}
     	return d;
     }
     
-    public ConcurrentHashMap<Integer, byte[]> getData(){
-    	return this.data;
+    public void addBackupFile(String file, Integer num_chunks) {
+    	this.backupFiles.put(file, num_chunks);
     }
+    public void removeBackupFile(String file) {
+    	this.backupFiles.remove(file);
+    }
+    
+    public Integer getFileChunks(String file) {
+    	return this.backupFiles.get(file);
+    }
+    
+    public List<Integer> getStoredChunks(){
+    	return this.chunksStored;
+    }
+    
 }

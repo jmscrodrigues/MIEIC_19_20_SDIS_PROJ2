@@ -7,6 +7,10 @@ import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -104,12 +108,16 @@ public class Chord {
 			System.out.println("Transferring data to successor initiated");
 			
 			SSLMessage m = new SSLMessage(this.successor);
-			ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
-			for (Entry<Integer, byte[]> entry : data.entrySet()) {
-				m.write(ChordOps.PUT  + entry.getKey(), entry.getValue());
+			List<Integer> list = this.memory.getStoredChunks();
+			for(int i = 0; i < list.size();i++) {
+				int chunkId = list.get(i);
+				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
 				m.read();
+				this.removeInMemory(chunkId);
+				i--;
 			}
 			m.close();
+			
 			System.out.println("Transferring data to successor done");
 			
 			m = new SSLMessage(this.successor);
@@ -256,14 +264,15 @@ public class Chord {
 	 */
 	public void sendData(int key, String ip, int port) {
 		InetSocketAddress pre = new InetSocketAddress(ip,port);
-		ConcurrentHashMap<Integer,byte[]> data = this.memory.getData();
+		List<Integer> storedChunks = this.memory.getStoredChunks();
 		SSLMessage m = new SSLMessage(pre);
-		for (Entry<Integer, byte[]> entry : data.entrySet()) {
-			int id = entry.getKey();
-			if (betweenOpenClose(this.getKey(), key, id)) {
-				m.write(ChordOps.PUT + " " + entry.getKey(), entry.getValue());
+		for(int i=0;i<storedChunks.size();i++) {		
+			int chunkId = storedChunks.get(i);
+			if (betweenOpenClose(this.getKey(), key, chunkId)) {
+				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
 				m.read();
-				data.remove(id);
+				this.removeInMemory(chunkId);
+				i--;
 			}
 		}
 		m.close();
@@ -491,7 +500,7 @@ public class Chord {
 
 	}
 	
-	private Memory getMemory() {
+	public Memory getMemory() {
 		return this.memory;
 	}
 	
@@ -528,4 +537,5 @@ public class Chord {
 	public void setKey(int key) {
 		this.key = key;
 	}
+	
 }

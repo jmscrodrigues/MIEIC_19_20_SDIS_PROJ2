@@ -93,7 +93,23 @@ public class Peer {
 	        }  
         }
         
+        //TODO generate unique id thorugh hash
+        this.chord.getMemory().addBackupFile(file_name, file.getNumberOfParts());
         
+        return "Backup with sucess";
+	}
+	
+	public String restore(String file_name) {
+		
+		Integer numChunks = this.chord.getMemory().getFileChunks(file_name);
+		if(numChunks == null)
+			return "File not known";
+		FileInfo file = new FileInfo(file_name, numChunks);
+		for(int i = 0; i < numChunks ; i++) {
+			byte[] ret = this.chord.get(file_name + "_" + i);
+			file.putFilePart(i, ret);
+		}
+        file.exportFile(file_name, "./peer" + this.chord.getKey() + "/");
         return "Backup with sucess";
 	}
 	

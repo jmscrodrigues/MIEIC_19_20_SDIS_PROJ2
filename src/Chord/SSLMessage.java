@@ -27,7 +27,7 @@ public class SSLMessage extends SSLBase {
     }
     
     public SSLMessage(String ip, int port)  {
-    	this.debug = true;
+    	this.debug = false;
     	this.ip = ip;
     	this.port = port;
 
@@ -105,8 +105,8 @@ public class SSLMessage extends SSLBase {
 
     	if(debug) System.out.println("Writing to server");
         send_plainData.clear();
-        System.out.println("message length: " +  message.length);
-        System.out.println("buffer length: " + send_plainData.capacity());
+        //System.out.println("message length: " +  message.length);
+        //System.out.println("buffer length: " + send_plainData.capacity());
         send_plainData.put(message);
         send_plainData.flip();
         while (send_plainData.hasRemaining()) {

@@ -14,7 +14,7 @@ public class ServerThread extends SSLServer implements Runnable {
 	ServerThread(Chord c, String hostAddress, int port) throws Exception{
 		super(hostAddress,port);
 		this.chord = c;
-		this.setDebug(true);
+		this.setDebug(false);
 	}
 	
 	@Override

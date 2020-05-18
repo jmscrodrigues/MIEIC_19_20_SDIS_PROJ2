@@ -41,7 +41,7 @@ public abstract class SSLBase {
         HandshakeStatus handshakeStatus;
 
         int maxBufferSize = engine.getSession().getApplicationBufferSize();
-        System.out.println(maxBufferSize);
+        //System.out.println(maxBufferSize);
         ByteBuffer send_plainData = ByteBuffer.allocate(maxBufferSize);
         ByteBuffer rcv_plainData = ByteBuffer.allocate(maxBufferSize);
         send_encryptedData.clear();
