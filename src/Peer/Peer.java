@@ -73,7 +73,7 @@ public class Peer {
 	}
 
 	public String remove(String key) {
-		byte[] ret = this.chord.remove(key);
+		byte[] ret = this.chord.remove(key,1);
 		return new String(ret, StandardCharsets.UTF_8);
 	}
 	
@@ -115,7 +115,7 @@ public class Peer {
 			return "File not known";
 		int numChunks = fileData.getNumChunks();
 		for(int i = 0; i < numChunks ; i++) {
-			this.chord.remove(file_name + "_" + i);
+			this.chord.remove(file_name + "_" + i, fileData.getReplicationDegree());
 		}
         this.chord.getMemory().removeBackupFile(file_name);
         return "Deleted with sucess";

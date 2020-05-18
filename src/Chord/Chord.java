@@ -239,11 +239,11 @@ public class Chord {
 		return data;
 	}
 	
-	public byte[] remove(String identifier) {
+	public byte[] remove(String identifier , int replication) {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
 		SSLMessage m = new SSLMessage(dest);
-		m.write(ChordOps.REMOVE + " " + key);
+		m.write(ChordOps.REMOVE + " " + key + " " + replication);
 		byte[] data =  m.read();
 		m.close();
 		return data;
@@ -263,25 +263,25 @@ public class Chord {
 		return this.getMemory().remove(key);
 	}
 	
-	public void putInSuccessor(int key, byte[] data) {
+	public void putInSuccessor(int key, byte[] body, int replication) {
 		if(this.betweenOpenClose(this.key, this.hash(successor), key)) // If it has made a complete turn arrounf the ring
 			return;
 		this.memory.addRedirectedChunk(key);
 		SSLMessage m = new SSLMessage(this.successor);
-		m.write(data);
+		m.write(ChordOps.PUT + " " + key + " "  + replication, body);
 		m.read();
 		m.close();
 	}
-	public byte[] getFromSuccessor(int key) {
+	public byte[] getFromSuccessor(int key, int replication) {
 		SSLMessage m = new SSLMessage(this.successor);
-		m.write(ChordOps.GET + " " + key);
+		m.write(ChordOps.GET + " " + key + " " + replication);
 		byte[] d = m.read();
 		m.close();
 		return d;
 	}
-	public byte[] removeFromSuccessor(int key) {
+	public byte[] removeFromSuccessor(int key, int replication) {
 		SSLMessage m = new SSLMessage(this.successor);
-		m.write(ChordOps.REMOVE + " " + key);
+		m.write(ChordOps.REMOVE + " " + key + " " + replication);
 		byte[] d = m.read();
 		m.close();
 		this.memory.removeRedirectedChunk(key);

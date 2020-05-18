@@ -75,29 +75,37 @@ public class SSLMessageHandler implements Runnable{
 				this.getHeaderAndBody();
 				if(this.chord.getMemory().canStoreChunk(body.length) == true) {
 					this.chord.putInMemory(key, body);
+					if(replication > 1)
+						this.chord.putInSuccessor(key,body,replication-1);
 				}else {
 					System.out.println("Could not store file, redirecting");
-					this.chord.putInSuccessor(key,data);
+					this.chord.putInSuccessor(key,body,replication);
 				}
 				break;
 			}
 			case ChordOps.GET: {
 				int key = Integer.parseInt(parts[1]);
+				int replication = Integer.parseInt(parts[2]);
 				if(this.chord.getMemory().chunkRedirected(key) == false)
 					toSend = this.chord.getInMemory(key);
 				else
-					toSend = this.chord.getFromSuccessor(key);
+					toSend = this.chord.getFromSuccessor(key,replication);
 				if (toSend == null) {
+					if(replication > 1)
+						this.chord.getFromSuccessor(key,replication-1);
 					toSend = "ERROR".getBytes();
 				}
 				break;
 			}
 			case ChordOps.REMOVE: {
 				int key = Integer.parseInt(parts[1]);
+				int replication = Integer.parseInt(parts[2]);
 				if(this.chord.getMemory().chunkRedirected(key) == false)
 					toSend = this.chord.removeInMemory(key);
+					if(replication > 1)
+						this.chord.removeFromSuccessor(key,replication-1);
 				else
-					toSend = this.chord.removeFromSuccessor(key);
+					toSend = this.chord.removeFromSuccessor(key,replication-1);
 				if (toSend == null) {
 					toSend = "ERROR".getBytes();
 				}
