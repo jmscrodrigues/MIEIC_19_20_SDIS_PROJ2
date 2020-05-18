@@ -77,8 +77,10 @@ public class Memory {
     	File file = new File(this.path + String.valueOf(chunkId));
     	byte[] d = this.get(chunkId);
     	if(file.exists() == false) {
+    		System.out.println("File to remove does not exists : " + this.path + String.valueOf(chunkId));
     		return null;
     	}
+    	System.out.println("Deleting file : " + this.path + String.valueOf(chunkId));
     	file.delete();
     	for(int i = 0; i < this.chunksStored.size();i++) {
     		if(this.chunksStored.get(i) == chunkId) {

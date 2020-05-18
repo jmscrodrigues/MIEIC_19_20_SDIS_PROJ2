@@ -33,7 +33,7 @@ public class SSLMessageHandler implements Runnable{
 		byte [] toSend = "SUCCESS".getBytes();
 		
 		String message = new String(data, StandardCharsets.UTF_8);
-	    //System.out.println("TO HANDLE " + message);
+	    System.out.println("TO HANDLE " + message);
 	    String[] parts = message.split(" ");
 	    String op = parts[0];
 	    System.out.println("To handle: " + op);
@@ -100,13 +100,15 @@ public class SSLMessageHandler implements Runnable{
 			case ChordOps.REMOVE: {
 				int key = Integer.parseInt(parts[1]);
 				int replication = Integer.parseInt(parts[2]);
-				if(this.chord.getMemory().chunkRedirected(key) == false)
+				if(this.chord.getMemory().chunkRedirected(key) == false) {
 					toSend = this.chord.removeInMemory(key);
 					if(replication > 1)
 						this.chord.removeFromSuccessor(key,replication-1);
-				else
+				}else {
+					this.chord.removeInMemory(key);
 					if(replication > 1)
 						toSend = this.chord.removeFromSuccessor(key,replication-1);
+				}
 				if (toSend == null) {
 					toSend = "ERROR".getBytes();
 				}
