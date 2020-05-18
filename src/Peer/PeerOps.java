@@ -21,4 +21,6 @@ public interface PeerOps {
     
     String BACKUP = "BACKUP";
     String RESTORE = "RESTORE";
+    
+    String STATUS = "STATUS";
 }

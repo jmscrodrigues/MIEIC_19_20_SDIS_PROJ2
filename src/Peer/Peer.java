@@ -122,6 +122,10 @@ public class Peer {
         return "Deleted with sucess";
 	}
 	
+	public String status() {
+		return this.chord.status();
+	}
+	
 	public ServerSocket getServerSocket() {
 		return this.serverSocket;
 	}
@@ -129,5 +133,6 @@ public class Peer {
 	public ScheduledThreadPoolExecutor getExecutor() {
 		return this.scheduler_executor;
 	}
+	
 
 }

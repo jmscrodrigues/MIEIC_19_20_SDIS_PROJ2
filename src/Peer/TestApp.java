@@ -98,6 +98,14 @@ public class TestApp {
 				toSend = op + " " + file;
 				break;
 			}
+			case PeerOps.STATUS: {
+				if (args.length != 1) {
+					System.err.println("Usage: TestApp <peer_ip>:<peer_port>");
+					System.exit(-1);
+				}
+				toSend = op;
+				break;
+			}
 			case PeerOps.DELETE: {
 				if (args.length != 3) {
 					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename>");

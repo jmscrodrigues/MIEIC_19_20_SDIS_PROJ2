@@ -567,4 +567,9 @@ public class Chord {
 		this.key = key;
 	}
 	
+	public String status() {
+		String str = "Peer with key " + this.key+ "\n";
+		str = this.getMemory().status();
+	}
+	
 }

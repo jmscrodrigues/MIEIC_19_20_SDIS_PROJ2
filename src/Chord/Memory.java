@@ -129,4 +129,13 @@ public class Memory {
     	return this.chunksStored;
     }
     
+    public String status() {
+    	String str = "";
+    	for(int i = 0; i < this.chunksStored.size();i++) {
+    		str += "\n";
+    	}
+    	str += "\n Max memory: " + this.maxMemory + "\t Memory in use: " + this.memoryInUse;
+    	return str;
+    }
+    
 }
