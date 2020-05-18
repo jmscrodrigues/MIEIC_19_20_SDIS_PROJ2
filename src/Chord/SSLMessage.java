@@ -33,7 +33,7 @@ public class SSLMessage extends SSLBase {
 
         SSLContext context = null;
 		try {
-			context = SSLContext.getInstance("TLS");
+			context = SSLContext.getInstance("TLSv1");
 			KeyManager[] keys = createKeyManagers("./client.jks", "storepass", "keypass");
 			TrustManager[] trusts = createTrustManagers("./trustedCerts.jks", "storepass");
 			context.init(keys, trusts, null);

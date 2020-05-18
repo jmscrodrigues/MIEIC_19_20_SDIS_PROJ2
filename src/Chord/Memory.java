@@ -5,11 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Memory {
@@ -25,6 +21,14 @@ public class Memory {
 	 * chunks stored by this peer
 	 */
 	private final List<Integer> chunksStored = new ArrayList<Integer>();
+	
+	/*
+	 * Chunks not able to store here and sent to sucessor 
+	 */
+	private final List<Integer> chunksRedirected = new ArrayList<Integer>();
+	
+	private final int maxMemory = 40000;
+	private int memoryInUse;
 	
 	String path;
 
@@ -54,6 +58,7 @@ public class Memory {
             e.printStackTrace();
             return false;
         }
+    	memoryInUse += data.length;
     	this.chunksStored.add(chunkId);
 		return true;
     }
@@ -74,8 +79,31 @@ public class Memory {
     			break;
     		}
     	}
+    	memoryInUse-=d.length;
     	return d;
     }
+    
+    public boolean canStoreChunk(int d) {
+    	return this.memoryInUse + d <= this.maxMemory;
+    }
+    
+    public void addRedirectedChunk(int key) {
+    	this.chunksRedirected.add(key);
+    }
+    public boolean chunkRedirected(int key) {
+    	for(int i = 0; i < this.chunksRedirected.size();i++)
+    		if(this.chunksRedirected.get(i) == key)
+    			return true;
+    	return false;
+    }
+    public void removeRedirectedChunk(int key) {
+    	for(int i = 0; i < this.chunksRedirected.size();i++)
+    		if(this.chunksRedirected.get(i) == key) {
+    			this.chunksRedirected.remove(i);
+    			return;
+    		}
+    }
+    
     
     public void addBackupFile(String file, Integer num_chunks) {
     	this.backupFiles.put(file, num_chunks);

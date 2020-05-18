@@ -105,22 +105,7 @@ public class Chord {
 		
 		if(this.successor != null && this.predecessor != null) {
 			
-			System.out.println("Transferring data to successor initiated");
-			
 			SSLMessage m = new SSLMessage(this.successor);
-			List<Integer> list = this.memory.getStoredChunks();
-			for(int i = 0; i < list.size();i++) {
-				int chunkId = list.get(i);
-				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
-				m.read();
-				this.removeInMemory(chunkId);
-				i--;
-			}
-			m.close();
-			
-			System.out.println("Transferring data to successor done");
-			
-			m = new SSLMessage(this.successor);
 			m.write(ChordOps.SET_PREDECESSOR + " " + this.hash(predecessor) + " " + this.predecessor.getHostName() + " " +  this.predecessor.getPort());
 			m.read();
 			m.close();
@@ -136,6 +121,23 @@ public class Chord {
 			m.close();
 
 			System.out.println("Sent new delete to predecessor");
+			
+			System.out.println("Transferring data to successor initiated");
+			
+			m = new SSLMessage(this.successor);
+			List<Integer> list = this.memory.getStoredChunks();
+			for(int i = 0; i < list.size();i++) {
+				int chunkId = list.get(i);
+				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
+				m.read();
+				this.removeInMemory(chunkId);
+				i--;
+			}
+			m.close();
+			
+			System.out.println("Transferring data to successor done");	
+			
+			
 		}
 		sllServer.stop();
 		System.out.println("Node left ring");
@@ -248,6 +250,8 @@ public class Chord {
 	}
 	
 	public void putInMemory(int key, byte[] data) {
+		if(this.getMemory().chunkRedirected(key))
+			this.getMemory().removeRedirectedChunk(key);
 		this.getMemory().put(key, data);
 	}
 	
@@ -257,6 +261,31 @@ public class Chord {
 	
 	public byte[] removeInMemory(int key) {
 		return this.getMemory().remove(key);
+	}
+	
+	public void putInSuccessor(int key, byte[] data) {
+		if(this.betweenOpenClose(this.key, this.hash(successor), key)) // If it has made a complete turn arrounf the ring
+			return;
+		this.memory.addRedirectedChunk(key);
+		SSLMessage m = new SSLMessage(this.successor);
+		m.write(data);
+		m.read();
+		m.close();
+	}
+	public byte[] getFromSuccessor(int key) {
+		SSLMessage m = new SSLMessage(this.successor);
+		m.write(ChordOps.GET + " " + key);
+		byte[] d = m.read();
+		m.close();
+		return d;
+	}
+	public byte[] removeFromSuccessor(int key) {
+		SSLMessage m = new SSLMessage(this.successor);
+		m.write(ChordOps.REMOVE + " " + key);
+		byte[] d = m.read();
+		m.close();
+		this.memory.removeRedirectedChunk(key);
+		return d;
 	}
 
 	/*

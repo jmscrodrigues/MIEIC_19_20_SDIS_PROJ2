@@ -72,12 +72,20 @@ public class SSLMessageHandler implements Runnable{
 			case ChordOps.PUT: {
 				int key = Integer.parseInt(parts[1]);
 				this.getHeaderAndBody();
-				this.chord.putInMemory(key, body);
+				if(this.chord.getMemory().canStoreChunk(body.length) == true) {
+					this.chord.putInMemory(key, body);
+				}else {
+					System.out.println("Could not store file, redirecting");
+					this.chord.putInSuccessor(key,data);
+				}
 				break;
 			}
 			case ChordOps.GET: {
 				int key = Integer.parseInt(parts[1]);
-				toSend = this.chord.getInMemory(key);
+				if(this.chord.getMemory().chunkRedirected(key) == false)
+					toSend = this.chord.getInMemory(key);
+				else
+					toSend = this.chord.getFromSuccessor(key);
 				if (toSend == null) {
 					toSend = "ERROR".getBytes();
 				}
@@ -85,7 +93,10 @@ public class SSLMessageHandler implements Runnable{
 			}
 			case ChordOps.REMOVE: {
 				int key = Integer.parseInt(parts[1]);
-				toSend = this.chord.removeInMemory(key);
+				if(this.chord.getMemory().chunkRedirected(key) == false)
+					toSend = this.chord.removeInMemory(key);
+				else
+					toSend = this.chord.removeFromSuccessor(key);
 				if (toSend == null) {
 					toSend = "ERROR".getBytes();
 				}

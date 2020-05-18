@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 public class SSLServer extends SSLBase{
     private boolean serverActive;
-    private SSLContext context =  SSLContext.getInstance("TLS");
+    private SSLContext context =  SSLContext.getInstance("TLSv1");
     protected Selector selector;
 
     public SSLServer(String hostAddress, int port) throws Exception { 
