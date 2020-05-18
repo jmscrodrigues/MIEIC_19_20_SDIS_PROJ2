@@ -86,6 +86,11 @@ public class Peer {
         for(int i = 0; i < file.getNumberOfParts(); i++) {
         	this.chord.put(file_name + "_" + i, file.getFilePart(i), replication);
         	System.out.println(i);
+        	try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
         }
         
         //TODO generate unique id through hash

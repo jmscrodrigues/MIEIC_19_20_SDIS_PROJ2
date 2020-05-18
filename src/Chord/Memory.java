@@ -42,6 +42,8 @@ public class Memory {
         /*return data.get(fileId);*/
     	byte[] buf = null;
 		File file = new File(this.path + String.valueOf(fileId));
+		if(file.exists() == false)
+			return null;
 		try(FileInputStream fileInputStream = new FileInputStream(file)){
 			buf = new byte[(int) file.length()];
 			fileInputStream.read(buf);
@@ -74,6 +76,9 @@ public class Memory {
         return data.remove(fileId);*/
     	File file = new File(this.path + String.valueOf(chunkId));
     	byte[] d = this.get(chunkId);
+    	if(file.exists() == false) {
+    		return null;
+    	}
     	file.delete();
     	for(int i = 0; i < this.chunksStored.size();i++) {
     		if(this.chunksStored.get(i) == chunkId) {

@@ -84,7 +84,6 @@ public class SSLServer extends SSLBase{
                 switch (res.getStatus()) {
                 case OK:
                     rcv_plainData.flip();
-                    //System.out.println("aquiiiiii");
                     //data = Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced()); 
                     System.arraycopy(rcv_plainData.array(), 0, data, bytes_read, res.bytesProduced());
                     bytes_read +=res.bytesProduced();

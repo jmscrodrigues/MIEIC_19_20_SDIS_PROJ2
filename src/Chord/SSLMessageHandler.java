@@ -105,7 +105,8 @@ public class SSLMessageHandler implements Runnable{
 					if(replication > 1)
 						this.chord.removeFromSuccessor(key,replication-1);
 				else
-					toSend = this.chord.removeFromSuccessor(key,replication-1);
+					if(replication > 1)
+						toSend = this.chord.removeFromSuccessor(key,replication-1);
 				if (toSend == null) {
 					toSend = "ERROR".getBytes();
 				}
