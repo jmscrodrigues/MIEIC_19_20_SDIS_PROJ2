@@ -107,6 +107,15 @@ public class TestApp {
 				toSend = op + " " + file;
 				break;
 			}
+			case PeerOps.RECLAIM: {
+				if (args.length != 3) {
+					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + "<reclaim_space>");
+					break;
+				}
+				int space = Integer.parseInt(args[2]);
+				toSend = op + " " + space;
+				break;
+			}
 			default: {
 				System.err.print("Not a valid operation\n");
 				System.exit(-1);
