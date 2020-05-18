@@ -73,6 +73,11 @@ public class PeerMessageHandler implements Runnable {
 				toSend = this.peer.delete(file).getBytes();
 				break;
 			}
+			case PeerOps.RECLAIM: {
+				int space = Integer.parseInt(parts[1]);
+				toSend = this.peer.reclaim(space).getBytes();
+				break;
+			}
 			default:
 				return;
 		}

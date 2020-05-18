@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import javafx.util.Pair;
+
 
 import Peer.FileData;
 
@@ -28,6 +30,8 @@ public class Memory {
 	 * Chunks not able to store here and sent to sucessor 
 	 */
 	private final List<Integer> chunksRedirected = new ArrayList<Integer>();
+
+	private final List<Pair<Integer,Integer>> chunkSize = new ArrayList<Pair<Integer,Integer>>();
 	
 	private final int maxMemory = 100000;
 	private int memoryInUse;
@@ -63,7 +67,9 @@ public class Memory {
             return false;
         }
     	memoryInUse += data.length;
-    	this.chunksStored.add(chunkId);
+		this.chunksStored.add(chunkId);
+		Pair<Integer,Integer> cSize = new Pair<Integer, Integer>(chunkId, data.length);
+		this.chunkSize.add(cSize);
 		return true;
     }
 
@@ -87,7 +93,12 @@ public class Memory {
     			this.chunksStored.remove(i);
     			break;
     		}
-    	}
+		}
+		for(Pair<Integer,Integer> pair : this.chunkSize) {
+			if(pair.getKey() == chunkId) {
+				this.chunkSize.remove(pair);
+			}
+		}
     	memoryInUse-=d.length;
     	return d;
     }
@@ -127,6 +138,14 @@ public class Memory {
     
     public List<Integer> getStoredChunks(){
     	return this.chunksStored;
-    }
+	}
+	
+	public int getMemoryInUse() {
+		return this.memoryInUse;
+	}
+
+	public List<Pair<Integer,Integer>> getChunkSizeList() {
+		return this.chunkSize;
+	} 
     
 }

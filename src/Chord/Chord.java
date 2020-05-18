@@ -15,7 +15,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import javafx.util.Pair;
 
 
 public class Chord {
@@ -566,5 +566,43 @@ public class Chord {
 	public void setKey(int key) {
 		this.key = key;
 	}
+
+	public void reclaim(int space) {
+		int needed_space = space;
+		List<Pair<Integer,Integer>> chunkStored = this.getMemory().getChunkSizeList();
+		int toRemoveKey = 0;
+		int toRemoveSize = 0;
+		for (Pair<Integer,Integer> pair : chunkStored) {
+			if (pair.getValue() > toRemoveSize) {
+				toRemoveSize = pair.getValue();
+				toRemoveKey = pair.getKey();
+			}
+		}
+
+		byte[] data;
+
+		data = this.removeInMemory(toRemoveKey);
+
+		this.putInSuccessor(toRemoveKey, data, 1);
+
+		
+		while(this.getMemory().getMemoryInUse() > needed_space) {
+			toRemoveKey = 0;
+			toRemoveSize = 0;
+			chunkStored = this.getMemory().getChunkSizeList();
+
+
+			for (Pair<Integer,Integer> pair : chunkStored) {
+				if (pair.getValue() > toRemoveSize) {
+					toRemoveSize = pair.getValue();
+					toRemoveKey = pair.getKey();
+				}
+			}
+
+			data = this.removeInMemory(toRemoveKey);
+
+			this.putInSuccessor(toRemoveKey, data, 1);
+		}
+	} 
 	
 }

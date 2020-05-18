@@ -123,7 +123,23 @@ public class Peer {
 			this.chord.remove(file_name + "_" + i, fileData.getReplicationDegree());
 		}
         this.chord.getMemory().removeBackupFile(file_name);
-        return "Deleted with sucess";
+        return "Deleted with success";
+	}
+
+
+	public String reclaim(int space) {
+		if (space < 0) {
+			return "New memory space must be greater than 0";
+		}
+
+		if(space > this.chord.getMemory().getMemoryInUse()) {
+
+		}
+		else {
+			this.chord.reclaim(space);
+		}
+
+		return "New memory now at " + space;
 	}
 	
 	public ServerSocket getServerSocket() {
