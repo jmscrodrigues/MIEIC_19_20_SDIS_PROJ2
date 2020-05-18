@@ -97,6 +97,7 @@ public class Memory {
 		for(Pair<Integer,Integer> pair : this.chunkSize) {
 			if(pair.getKey() == chunkId) {
 				this.chunkSize.remove(pair);
+				break;
 			}
 		}
     	memoryInUse-=d.length;

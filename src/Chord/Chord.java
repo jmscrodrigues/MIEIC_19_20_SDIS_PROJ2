@@ -584,9 +584,11 @@ public class Chord {
 		data = this.removeInMemory(toRemoveKey);
 
 		this.putInSuccessor(toRemoveKey, data, 1);
+		System.out.println("Got here!!!");
 
 		
 		while(this.getMemory().getMemoryInUse() > needed_space) {
+			System.out.println("On the while!!!");
 			toRemoveKey = 0;
 			toRemoveSize = 0;
 			chunkStored = this.getMemory().getChunkSizeList();
@@ -600,6 +602,7 @@ public class Chord {
 			}
 
 			data = this.removeInMemory(toRemoveKey);
+			
 
 			this.putInSuccessor(toRemoveKey, data, 1);
 		}
