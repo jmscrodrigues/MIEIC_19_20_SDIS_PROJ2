@@ -23,4 +23,7 @@ public interface PeerOps {
     String RESTORE = "RESTORE";
     
     String STATUS = "STATUS";
+
+    String RECLAIM = "RECLAIM";
+
 }
