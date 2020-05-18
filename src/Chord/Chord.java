@@ -219,21 +219,21 @@ public class Chord {
 		}
 	}
 	
-	public void put	(String identifier, byte[] data) {
+	public void put	(String identifier, byte[] data ,  int replication) {
+		//TODO:: it is possible to check here if chunk targets for this peer
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
 		SSLMessage m = new SSLMessage(dest);
-		System.out.println("a");
-		m.write(ChordOps.PUT + " " + key , data);
+		m.write(ChordOps.PUT + " " + key + " "  + replication, data);
 		m.read();
 		m.close();
 	}
 	
-	public byte[] get(String identifier) {
+	public byte[] get(String identifier, int replication) {
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
 		SSLMessage m = new SSLMessage(dest);
-		m.write(ChordOps.GET + " " + key);
+		m.write(ChordOps.GET + " " + key + " " + replication);
 		byte[] data =  m.read();
 		m.close();
 		return data;

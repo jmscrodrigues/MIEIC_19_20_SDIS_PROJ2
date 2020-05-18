@@ -24,16 +24,6 @@ public class TestApp {
 		this.args = args;
 	}
 
-	private void openPeerSocket() {
-		try {
-			this.peer_socket = new Socket(this.peer_ip, this.peer_port);
-		} catch (IOException e) {
-			System.err.println("Could not connect to peer");
-			e.printStackTrace();
-			System.exit(-1);
-		}
-	}
-
 	public static void main(String[] args) {
 		if (args.length < 3) {
 			System.out.println("Usage: TestApp <peer_ip>:<peer_port> op [args]");
@@ -46,13 +36,24 @@ public class TestApp {
 
 		TestApp testApp = new TestApp(ip, port, args[1], args);
 
+		String operation = testApp.buildOperation();
 		testApp.openPeerSocket();
-		String response = testApp.initiateOperation();
+		String response = testApp.executeOperation(operation);
 
 		System.out.println(response);
 	}
-
-	private String initiateOperation() {
+	
+	private void openPeerSocket() {
+		try {
+			this.peer_socket = new Socket(this.peer_ip, this.peer_port);
+		} catch (IOException e) {
+			System.err.println("Could not connect to peer");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
+	
+	private String buildOperation() {
 		String toSend = null;
 		
 		switch (op.toUpperCase()) {
@@ -74,20 +75,18 @@ public class TestApp {
 					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <key>");
 					System.exit(-1);
 				}
-
 				String key = args[2];
-
 				toSend = op + " " + key;
 				break;
 			}
 			case PeerOps.BACKUP: {
-				if (args.length != 3) {
-					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename>");
+				if (args.length != 4) {
+					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename> <replication_degree>");
 					System.exit(-1);
 				}
-				String key = args[2];
-
-				toSend = op + " " + key;
+				String file = args[2];
+				int replication = Integer.parseInt(args[3]);
+				toSend = op + " " + file + " " + replication;
 				break;
 			}
 			case PeerOps.RESTORE: {
@@ -95,8 +94,8 @@ public class TestApp {
 					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename>");
 					System.exit(-1);
 				}
-				String key = args[2];
-				toSend = op + " " + key;
+				String file = args[2];
+				toSend = op + " " + file;
 				break;
 			}
 			case PeerOps.DELETE: {
@@ -104,8 +103,8 @@ public class TestApp {
 					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename>");
 					System.exit(-1);
 				}
-				String key = args[2];
-				toSend = op + " " + key;
+				String file = args[2];
+				toSend = op + " " + file;
 				break;
 			}
 			default: {
@@ -113,6 +112,10 @@ public class TestApp {
 				System.exit(-1);
 			}
 		}
+		return toSend;
+	}
+
+	private String executeOperation(String toSend) {
 
 		byte[] message = toSend.getBytes();
 		try {

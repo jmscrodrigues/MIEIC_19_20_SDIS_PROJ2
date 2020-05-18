@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import Peer.FileData;
+
 public class Memory {
     
 	//private final ConcurrentHashMap<Integer, byte[]> data = new ConcurrentHashMap<>();
@@ -15,7 +17,7 @@ public class Memory {
 	/*
 	 * Files backedup by this peer
 	 */
-	private final ConcurrentHashMap<String, Integer> backupFiles = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, FileData> backupFiles = new ConcurrentHashMap<>();
 	
 	/*
 	 * chunks stored by this peer
@@ -27,7 +29,7 @@ public class Memory {
 	 */
 	private final List<Integer> chunksRedirected = new ArrayList<Integer>();
 	
-	private final int maxMemory = 40000;
+	private final int maxMemory = 100000;
 	private int memoryInUse;
 	
 	String path;
@@ -105,15 +107,15 @@ public class Memory {
     }
     
     
-    public void addBackupFile(String file, Integer num_chunks) {
-    	this.backupFiles.put(file, num_chunks);
+    public void addBackupFile(String file_id, FileData f) {
+    	this.backupFiles.put(file_id, f);
     }
-    public void removeBackupFile(String file) {
-    	this.backupFiles.remove(file);
+    public void removeBackupFile(String file_id) {
+    	this.backupFiles.remove(file_id);
     }
     
-    public Integer getFileChunks(String file) {
-    	return this.backupFiles.get(file);
+    public FileData getFileChunks(String file_id) {
+    	return this.backupFiles.get(file_id);
     }
     
     public List<Integer> getStoredChunks(){

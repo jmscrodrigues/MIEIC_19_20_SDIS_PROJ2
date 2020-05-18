@@ -71,6 +71,7 @@ public class SSLMessageHandler implements Runnable{
 			}
 			case ChordOps.PUT: {
 				int key = Integer.parseInt(parts[1]);
+				int replication = Integer.parseInt(parts[2]);
 				this.getHeaderAndBody();
 				if(this.chord.getMemory().canStoreChunk(body.length) == true) {
 					this.chord.putInMemory(key, body);

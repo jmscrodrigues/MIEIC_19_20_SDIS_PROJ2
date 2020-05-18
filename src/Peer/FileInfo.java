@@ -14,6 +14,8 @@ public class FileInfo {
 	private ArrayList<byte[]> fileParts;
 	private File file;
 	
+	private FileData fileData;
+	
 	public FileInfo(String path, int replicationDegree) {
         this.file = new File(path);
         this.fileParts = new ArrayList<byte[]>();
@@ -21,8 +23,7 @@ public class FileInfo {
         	fileDivision();
         else
         	return;
-
-        //this.fileData = new FileData(path, createFileId(), replicationDegree, this.fileParts.size(),this.file.getName());
+        this.fileData = new FileData(path,this.fileParts.size(),replicationDegree);
     }
 	
     public FileInfo(int numChunks) {
@@ -85,6 +86,10 @@ public class FileInfo {
     
     public void putFilePart(int i, byte[] d) {
         this.fileParts.set(i,d);
+    }
+    
+    public FileData getFileData() {
+    	return this.fileData;
     }
 	
 }
