@@ -605,4 +605,10 @@ public class Chord {
 		}
 	} 
 	
+	public String status() {
+		String str = "Peer with key " + this.key+ "\n";
+		str += this.getMemory().status();
+		return str;
+	}
+	
 }

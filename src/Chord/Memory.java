@@ -148,4 +148,14 @@ public class Memory {
 		return this.chunkSize;
 	} 
     
+    public String status() {
+    	String str = "Key \t Length\n";
+    	for(int i = 0; i < this.chunkSize.size();i++) {
+    		Pair<Integer,Integer> p = this.chunkSize.get(i);
+    		str += p.getKey() + " -> " + p.getValue()  + "\n";
+    	}
+    	str += "\n\nMax memory: " + this.maxMemory + "\t Memory in use: " + this.memoryInUse;
+    	return str;
+    }
+    
 }

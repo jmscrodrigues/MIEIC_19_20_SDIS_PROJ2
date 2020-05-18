@@ -138,6 +138,10 @@ public class Peer {
 		return "New memory now at " + space;
 	}
 	
+	public String status() {
+		return this.chord.status();
+	}
+	
 	public ServerSocket getServerSocket() {
 		return this.serverSocket;
 	}
@@ -145,5 +149,6 @@ public class Peer {
 	public ScheduledThreadPoolExecutor getExecutor() {
 		return this.scheduler_executor;
 	}
+	
 
 }

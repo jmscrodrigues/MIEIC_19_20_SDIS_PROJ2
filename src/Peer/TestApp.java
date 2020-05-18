@@ -25,7 +25,7 @@ public class TestApp {
 	}
 
 	public static void main(String[] args) {
-		if (args.length < 3) {
+		if (args.length < 2) {
 			System.out.println("Usage: TestApp <peer_ip>:<peer_port> op [args]");
 			System.exit(0);
 		}
@@ -96,6 +96,14 @@ public class TestApp {
 				}
 				String file = args[2];
 				toSend = op + " " + file;
+				break;
+			}
+			case PeerOps.STATUS: {
+				if (args.length != 2) {
+					System.err.println("Usage: TestApp <peer_ip>:<peer_port> op");
+					System.exit(-1);
+				}
+				toSend = op;
 				break;
 			}
 			case PeerOps.DELETE: {
