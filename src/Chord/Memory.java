@@ -24,14 +24,14 @@ public class Memory {
 	/*
 	 * chunks stored by this peer
 	 */
-	private final List<Integer> chunksStored = new ArrayList<Integer>();
+	private final List<Pair<Integer,Integer>> chunksStored = new ArrayList<Pair<Integer,Integer>>();
 	
 	/*
 	 * Chunks not able to store here and sent to sucessor 
 	 */
 	private final List<Integer> chunksRedirected = new ArrayList<Integer>();
 
-	private final List<Pair<Integer,Integer>> chunkSize = new ArrayList<Pair<Integer,Integer>>();
+	//private final List<Pair<Integer,Integer>> chunkSize = new ArrayList<Pair<Integer,Integer>>();
 	
 	private final int maxMemory = 100000;
 	private int memoryInUse;
@@ -67,9 +67,9 @@ public class Memory {
             return false;
         }
     	memoryInUse += data.length;
-		this.chunksStored.add(chunkId);
-		Pair<Integer,Integer> cSize = new Pair<Integer, Integer>(chunkId, data.length);
-		this.chunkSize.add(cSize);
+		this.chunksStored.add(new Pair<Integer, Integer>(chunkId,data.length));
+		//Pair<Integer,Integer> cSize = new Pair<Integer, Integer>(chunkId, data.length);
+		//this.chunkSize.add(cSize);
 		return true;
     }
 
@@ -89,17 +89,17 @@ public class Memory {
     	System.out.println("Deleting file : " + this.path + String.valueOf(chunkId));
     	file.delete();
     	for(int i = 0; i < this.chunksStored.size();i++) {
-    		if(this.chunksStored.get(i) == chunkId) {
+    		if(this.chunksStored.get(i).getKey() == chunkId) {
     			this.chunksStored.remove(i);
     			break;
     		}
 		}
-		for(Pair<Integer,Integer> pair : this.chunkSize) {
+		/*for(Pair<Integer,Integer> pair : this.chunkSize) {
 			if(pair.getKey() == chunkId) {
 				this.chunkSize.remove(pair);
 				break;
 			}
-		}
+		}*/
     	memoryInUse-=d.length;
     	return d;
     }
@@ -137,7 +137,7 @@ public class Memory {
     	return this.backupFiles.get(file_id);
     }
     
-    public List<Integer> getStoredChunks(){
+    public List<Pair<Integer,Integer>> getStoredChunks(){
     	return this.chunksStored;
 	}
 	
@@ -145,14 +145,14 @@ public class Memory {
 		return this.memoryInUse;
 	}
 
-	public List<Pair<Integer,Integer>> getChunkSizeList() {
+	/*public List<Pair<Integer,Integer>> getChunkSizeList() {
 		return this.chunkSize;
-	} 
+	} */
     
     public String status() {
     	String str = "Key \t Length\n";
-    	for(int i = 0; i < this.chunkSize.size();i++) {
-    		Pair<Integer,Integer> p = this.chunkSize.get(i);
+    	for(int i = 0; i < this.chunksStored.size();i++) {
+    		Pair<Integer,Integer> p = this.chunksStored.get(i);
     		str += p.getKey() + " -> " + p.getValue()  + "\n";
     	}
     	str += "\n\nMax memory: " + this.maxMemory + "\t Memory in use: " + this.memoryInUse;

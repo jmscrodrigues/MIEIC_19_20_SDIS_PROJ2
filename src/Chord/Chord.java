@@ -125,9 +125,9 @@ public class Chord {
 			System.out.println("Transferring data to successor initiated");
 			
 			m = new SSLMessage(this.successor);
-			List<Integer> list = this.memory.getStoredChunks();
+			List<Pair<Integer,Integer>> list = this.memory.getStoredChunks();
 			for(int i = 0; i < list.size();i++) {
-				int chunkId = list.get(i);
+				int chunkId = list.get(i).getKey();
 				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
 				m.read();
 				this.removeInMemory(chunkId);
@@ -293,10 +293,10 @@ public class Chord {
 	 */
 	public void sendData(int key, String ip, int port) {
 		InetSocketAddress pre = new InetSocketAddress(ip,port);
-		List<Integer> storedChunks = this.memory.getStoredChunks();
+		List<Pair<Integer,Integer>> storedChunks = this.memory.getStoredChunks();
 		SSLMessage m = new SSLMessage(pre);
 		for(int i=0;i<storedChunks.size();i++) {		
-			int chunkId = storedChunks.get(i);
+			int chunkId = storedChunks.get(i).getKey();
 			if (betweenOpenClose(this.getKey(), key, chunkId)) {
 				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
 				m.read();
@@ -569,18 +569,15 @@ public class Chord {
 
 	public void reclaim(int space) {
 		int needed_space = space;
-		List<Pair<Integer,Integer>> chunkStored = this.getMemory().getChunkSizeList();
+		List<Pair<Integer,Integer>> chunkStored = this.getMemory().getStoredChunks();
 		int toRemoveKey = 0;
 		int toRemoveSize = 0;
-		for (Pair<Integer,Integer> pair : chunkStored) {
+		for (Pair<Integer,Integer> pair : chunkStored)
 			if (pair.getValue() > toRemoveSize) {
 				toRemoveSize = pair.getValue();
 				toRemoveKey = pair.getKey();
 			}
-		}
-
 		byte[] data;
-
 		data = this.removeInMemory(toRemoveKey);
 
 		this.putInSuccessor(toRemoveKey, data, 1);
@@ -591,19 +588,13 @@ public class Chord {
 			System.out.println("On the while!!!");
 			toRemoveKey = 0;
 			toRemoveSize = 0;
-			chunkStored = this.getMemory().getChunkSizeList();
-
-
-			for (Pair<Integer,Integer> pair : chunkStored) {
+			chunkStored = this.getMemory().getStoredChunks();
+			for (Pair<Integer,Integer> pair : chunkStored)
 				if (pair.getValue() > toRemoveSize) {
 					toRemoveSize = pair.getValue();
 					toRemoveKey = pair.getKey();
 				}
-			}
-
 			data = this.removeInMemory(toRemoveKey);
-			
-
 			this.putInSuccessor(toRemoveKey, data, 1);
 		}
 	} 
