@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 public class SSLServer extends SSLBase{
     private boolean serverActive;
-    private SSLContext context =  SSLContext.getInstance("TLSv1");
+    private SSLContext context =  SSLContext.getInstance("SSL");
     protected Selector selector;
 
     public SSLServer(String hostAddress, int port) throws Exception { 
@@ -87,7 +87,17 @@ public class SSLServer extends SSLBase{
                     //data = Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced()); 
                     System.arraycopy(rcv_plainData.array(), 0, data, bytes_read, res.bytesProduced());
                     bytes_read +=res.bytesProduced();
+                    rcv_plainData.compact();
                     //System.out.println("Message: " + new String(data));
+                    // Prepare buffer for use
+                    /*while (res.bytesProduced() >= 0 || rcv_plainData.position() != 0) {
+                    	rcv_plainData.flip();
+                    	System.arraycopy(rcv_plainData.array(), 0, data, bytes_read, res.bytesProduced());
+                        bytes_read +=res.bytesProduced();
+                        rcv_plainData.compact();    // In case of partial write
+                    }*/
+
+                    
                     break;
                 case BUFFER_OVERFLOW:
                     rcv_plainData = enlargeApplicationBuffer(eng, rcv_plainData);
@@ -112,6 +122,7 @@ public class SSLServer extends SSLBase{
             if(debug) System.out.println("Goodbye client!");
             return null;
         }
+        System.out.println(bytes_read);
         return Arrays.copyOfRange(data, 0, bytes_read);
     }
 
