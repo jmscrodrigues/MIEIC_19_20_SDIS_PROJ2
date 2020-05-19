@@ -80,19 +80,18 @@ public class Peer {
 	public String backup(String file_name, int replication) {
 		
 		FileInfo file = new FileInfo(file_name, replication);
-        if(file.doesFileExists() == false) {
+        if (!file.doesFileExists()) {
         	return "File " + file_name +" not found";
         }        
-        for(int i = 0; i < file.getNumberOfParts(); i++) {
+        for (int i = 0; i < file.getNumberOfParts(); i++) {
         	this.chord.put(file_name + "_" + i, file.getFilePart(i), replication);
         	System.out.println(i);
-
         }
         
         //TODO generate unique id through hash
         this.chord.getMemory().addBackupFile(file_name, file.getFileData());
         
-        return "Backup with sucess";
+        return "Backup with success";
 	}
 	
 	public String restore(String file_name) {
@@ -107,7 +106,7 @@ public class Peer {
 			file.putFilePart(i, ret);
 		}
         file.exportFile(file_name, "./peer" + this.chord.getKey() + "/");
-        return "Backup with sucess";
+        return "Backup with success";
 	}
 	public String delete(String file_name) {
 		

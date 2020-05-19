@@ -35,7 +35,7 @@ public class PeerMessageHandler implements Runnable {
 	    System.out.println(message);
 	    String[] parts = message.split(" ");
 	    
-	    String op = parts[0];
+	    String op = parts[0].toUpperCase();
 
 	    byte[] toSend;
 

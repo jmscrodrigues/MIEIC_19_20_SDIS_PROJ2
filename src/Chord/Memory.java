@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import javafx.util.Pair;
-
 
 import Peer.FileData;
 
@@ -67,7 +65,7 @@ public class Memory {
             return false;
         }
     	memoryInUse += data.length;
-		this.chunksStored.add(new Pair<Integer, Integer>(chunkId,data.length));
+		this.chunksStored.add(new Pair<>(chunkId,data.length));
 		//Pair<Integer,Integer> cSize = new Pair<Integer, Integer>(chunkId, data.length);
 		//this.chunkSize.add(cSize);
 		return true;
