@@ -31,12 +31,16 @@ public class SSLMessage {
             return;
         }
 
+        System.out.print("Initiating connection...\n");
+
         try {
             this.connect();
         } catch (Exception e) {
             System.err.print("Failed to connect to socket\n");
             e.printStackTrace();
         }
+
+        System.out.print("Connection established\n");
     }
 
     private void connect() throws Exception {

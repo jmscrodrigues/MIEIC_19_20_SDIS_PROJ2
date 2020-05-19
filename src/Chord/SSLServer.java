@@ -23,6 +23,10 @@ public class SSLServer {
             System.err.print("Failed to create server socket");
             e.printStackTrace();
         }
+
+        System.out.print("Created ssl server socket\n");
+
+        this.serverSocket.setNeedClientAuth(true);
     }
 
     public SSLSocket acceptConnection() throws IOException {
