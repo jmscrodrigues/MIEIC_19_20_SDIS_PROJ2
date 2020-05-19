@@ -76,11 +76,14 @@ public class SSLServer extends SSLBase{
     	int bytes_read = 0;
         rcv_encryptedData.clear();
         int bytesRead = socket.read(rcv_encryptedData);
+        if(debug) System.out.println("Lido:  " + bytesRead);
         if (bytesRead > 0) {
             rcv_encryptedData.flip();
-            while (rcv_encryptedData.hasRemaining()) {
+            while (rcv_encryptedData.hasRemaining() && bytesRead > 0) {
                 rcv_plainData.clear();
                 SSLEngineResult res = eng.unwrap(rcv_encryptedData, rcv_plainData);
+                //rcv_encryptedData.compact();
+                if(debug) System.out.println(res);
                 switch (res.getStatus()) {
                 case OK:
                     rcv_plainData.flip();
@@ -88,22 +91,17 @@ public class SSLServer extends SSLBase{
                     System.arraycopy(rcv_plainData.array(), 0, data, bytes_read, res.bytesProduced());
                     bytes_read +=res.bytesProduced();
                     rcv_plainData.compact();
-                    //System.out.println("Message: " + new String(data));
-                    // Prepare buffer for use
-                    /*while (res.bytesProduced() >= 0 || rcv_plainData.position() != 0) {
-                    	rcv_plainData.flip();
-                    	System.arraycopy(rcv_plainData.array(), 0, data, bytes_read, res.bytesProduced());
-                        bytes_read +=res.bytesProduced();
-                        rcv_plainData.compact();    // In case of partial write
-                    }*/
-
                     
                     break;
                 case BUFFER_OVERFLOW:
                     rcv_plainData = enlargeApplicationBuffer(eng, rcv_plainData);
                     break;
                 case BUFFER_UNDERFLOW:
-                rcv_encryptedData = handleBufferUnderflow(eng, rcv_encryptedData);
+                	//rcv_encryptedData = handleBufferUnderflow(eng, rcv_encryptedData);
+                	rcv_encryptedData.compact();
+                    bytesRead = socket.read(rcv_encryptedData);
+                    if(debug) System.out.println("Lido:  " + bytesRead);
+                    rcv_encryptedData.flip();
                     break;
                 case CLOSED:
                 	if(debug) System.out.println("Client wants to close connection");
@@ -113,6 +111,11 @@ public class SSLServer extends SSLBase{
                 default:
                     throw new IllegalStateException("Status is not valid: " + res.getStatus());
                 }
+            }
+            if (bytesRead < 0) {
+                handleEndOfStream(socket, eng);
+                if(debug) System.out.println("Goodbye client!");
+                return null;
             }
 
             //write(sC, eng, "Hello! I am your server!");
