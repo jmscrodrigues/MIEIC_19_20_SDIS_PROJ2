@@ -1,200 +1,62 @@
 package Chord;
 
+import javax.net.ServerSocketFactory;
 import javax.net.ssl.*;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.security.KeyStore;
 
+public class SSLServer {
 
+    private final int port;
+    private SSLServerSocket serverSocket;
 
-public class SSLServer extends SSLBase{
     private boolean serverActive;
-    private SSLContext context =  SSLContext.getInstance("SSL");
-    protected Selector selector;
 
-    public SSLServer(String hostAddress, int port) throws Exception { 
+    public SSLServer(int port) {
+        this.port = port;
+        this.serverActive = true;
 
-    KeyManager[] keys = createKeyManagers("./client.jks", "storepass", "keypass");
-    TrustManager[] trusts = createTrustManagers("./trustedCerts.jks", "storepass");
-    context.init(keys, trusts, null); 
-
-
-    SSLSession engineSession = context.createSSLEngine().getSession();
-    send_plainData = ByteBuffer.allocate(engineSession.getApplicationBufferSize());
-    rcv_plainData = ByteBuffer.allocate(engineSession.getApplicationBufferSize());
-
-    send_encryptedData = ByteBuffer.allocate(engineSession.getPacketBufferSize());
-    rcv_encryptedData = ByteBuffer.allocate(engineSession.getPacketBufferSize());
-    engineSession.invalidate();
-
-    selector = SelectorProvider.provider().openSelector();
-    ServerSocketChannel channel = ServerSocketChannel.open();
-    channel.configureBlocking(false);
-    channel.socket().bind(new InetSocketAddress(hostAddress, port));
-    channel.register(selector, SelectionKey.OP_ACCEPT);
-
-    serverActive = true;
-    }
-
-
-    public void start() throws Exception {
-
-    	if(debug) System.out.println("SSLServer initialized");
-
-        while (isServerActive()) {
-            selector.select();
-            Iterator<SelectionKey> selected = selector.selectedKeys().iterator();
-            while (selected.hasNext()) {
-                SelectionKey k = selected.next();
-                selected.remove();
-                if (!k.isValid()) {
-                    continue;
-                }
-                if (k.isAcceptable()) {
-                    accept(k);
-                } else if (k.isReadable()) {
-                    read((SocketChannel) k.channel(), (SSLEngine) k.attachment());
-                }
-            }
+        try {
+            this.serverSocket = this.createServerSocket();
+        } catch (Exception e) {
+            System.err.print("Failed to create server socket");
+            e.printStackTrace();
         }
-        
-        if(debug) System.out.println("Goodbye!");
     }
 
-    @Override
-    protected synchronized byte[] read(SocketChannel socket, SSLEngine eng) throws IOException {
-
-    	if(debug) System.out.println("Will read from a client");
-    	byte[] data = new byte[64100];
-    	int bytes_read = 0;
-        rcv_encryptedData.clear();
-        int bytesRead = socket.read(rcv_encryptedData);
-        if(debug) System.out.println("Lido:  " + bytesRead);
-        if (bytesRead > 0) {
-            rcv_encryptedData.flip();
-            while (rcv_encryptedData.hasRemaining() && bytesRead > 0) {
-                rcv_plainData.clear();
-                SSLEngineResult res = eng.unwrap(rcv_encryptedData, rcv_plainData);
-                //rcv_encryptedData.compact();
-                if(debug) System.out.println(res);
-                switch (res.getStatus()) {
-                case OK:
-                    rcv_plainData.flip();
-                    //data = Arrays.copyOfRange(rcv_plainData.array(), 0, res.bytesProduced()); 
-                    System.arraycopy(rcv_plainData.array(), 0, data, bytes_read, res.bytesProduced());
-                    bytes_read +=res.bytesProduced();
-                    rcv_plainData.compact();
-                    
-                    break;
-                case BUFFER_OVERFLOW:
-                    rcv_plainData = enlargeApplicationBuffer(eng, rcv_plainData);
-                    break;
-                case BUFFER_UNDERFLOW:
-                	//rcv_encryptedData = handleBufferUnderflow(eng, rcv_encryptedData);
-                	rcv_encryptedData.compact();
-                    bytesRead = socket.read(rcv_encryptedData);
-                    if(debug) System.out.println("Lido:  " + bytesRead);
-                    rcv_encryptedData.flip();
-                    break;
-                case CLOSED:
-                	if(debug) System.out.println("Client wants to close connection");
-                    closeConnection(socket, eng);
-                    if(debug) System.out.println("Connection closed");
-                    return data;
-                default:
-                    throw new IllegalStateException("Status is not valid: " + res.getStatus());
-                }
-            }
-            if (bytesRead < 0) {
-                handleEndOfStream(socket, eng);
-                if(debug) System.out.println("Goodbye client!");
-                return null;
-            }
-
-            //write(sC, eng, "Hello! I am your server!");
-
-        } else if (bytesRead < 0) {
-            handleEndOfStream(socket, eng);
-            if(debug) System.out.println("Goodbye client!");
-            return null;
-        }
-        System.out.println(bytes_read);
-        return Arrays.copyOfRange(data, 0, bytes_read);
+    public SSLSocket acceptConnection() throws IOException {
+        return (SSLSocket) this.serverSocket.accept();
     }
 
-    public void write(SocketChannel sC, SSLEngine eng, String message) throws IOException {
-        write(sC, eng, message.getBytes());
-    }
-    
-
-    @Override
-    protected synchronized  void write(SocketChannel sC, SSLEngine eng, byte[] msg) throws IOException {
-
-    	if(debug) System.out.println("Will write to a client");
-
-        send_plainData.clear();
-        send_plainData.put(msg);
-        send_plainData.flip();
-        while (send_plainData.hasRemaining()) {
-            send_encryptedData.clear();
-            SSLEngineResult res = eng.wrap(send_plainData, send_encryptedData);
-            switch (res.getStatus()) {
-            case OK:
-                send_encryptedData.flip();
-                while (send_encryptedData.hasRemaining()) {
-                    sC.write(send_encryptedData);
-                }
-                //System.out.println("Message sent: " + new String(msg));
-                break;
-            case BUFFER_OVERFLOW:
-            send_encryptedData = enlargePacketBuffer(eng, send_encryptedData);
-                break;
-            case BUFFER_UNDERFLOW:
-                throw new SSLException("Buffer underflow occured.");
-            case CLOSED:
-                closeConnection(sC, eng);
-                return;
-            default:
-                throw new IllegalStateException("Status is not valid: " + res.getStatus());
-            }
-        }
+    public boolean isServerActive() {
+        return this.serverActive;
     }
 
     public void stop() {
-    	if(debug) System.out.println("Server closing");
-    	executor.shutdown();
-    	selector.wakeup();
-    	serverActive = false;
+        this.serverActive = false;
     }
 
-    protected boolean isServerActive() {
-        return serverActive;
+    public boolean serverIsClosed() {
+        return this.serverSocket.isClosed();
     }
 
-    protected void accept(SelectionKey k) throws Exception {
+    private SSLServerSocket createServerSocket() throws Exception {
+        SSLContext context;
+        KeyManagerFactory keyManagerFactory;
+        KeyStore keyStore;
+        char[] passphrase = "passphrase".toCharArray();
 
-    	if(debug) System.out.println("Connection request!");
+        context = SSLContext.getInstance("TLS");
+        keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        keyStore = KeyStore.getInstance("JKS");
 
-        SocketChannel socketChannel = ((ServerSocketChannel) k.channel()).accept();
-        socketChannel.configureBlocking(false);
+        keyStore.load(new FileInputStream("testkeys.jks"), passphrase);
+        keyManagerFactory.init(keyStore, passphrase);
+        context.init(keyManagerFactory.getKeyManagers(), null, null);
 
-        SSLEngine engine = context.createSSLEngine();
-        engine.setUseClientMode(false);
-        engine.beginHandshake();
+        ServerSocketFactory serverSocketFactory = context.getServerSocketFactory();
 
-        if (doHandshake(socketChannel, engine)) {
-            socketChannel.register(selector, SelectionKey.OP_READ, engine);
-        } else {
-            socketChannel.close();
-            if(debug) System.out.println("Connection closed due to handshake failure.");
-        }
+        return (SSLServerSocket) serverSocketFactory.createServerSocket(this.port);
     }
-
 }

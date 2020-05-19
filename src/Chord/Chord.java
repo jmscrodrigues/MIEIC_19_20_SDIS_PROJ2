@@ -23,14 +23,11 @@ public class Chord {
 	private InetSocketAddress successor;
 	private InetSocketAddress predecessor;
 	private InetSocketAddress access_peer;
-	
-	private ServerSocket serverSocket;
-	
-	public ServerThread sllServer;
+
+	private ChordServer chordServer;
 	
 	private final ConcurrentHashMap<Integer,InetSocketAddress> fingerTable = new ConcurrentHashMap<>();
 
-	
 	int port;
 	private int key;
 	
@@ -48,9 +45,9 @@ public class Chord {
 		this.peer = p;
         this.port = port;
 
+        this.chordServer = new ChordServer(this, port);
         try {
-        	sllServer = new ServerThread(this,"localhost",port);
-        	this.peer.getExecutor().execute(sllServer);
+        	this.peer.getExecutor().execute(this.chordServer);
         } catch (Exception e) {
             System.err.println("Could not create the server");
             e.printStackTrace();
@@ -62,7 +59,6 @@ public class Chord {
         //this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
         
         System.out.println("Chord initiated with key " + this.getKey());
-        
     }
 	
 	public void joinRing(InetSocketAddress peer) {
@@ -73,13 +69,15 @@ public class Chord {
 		
 		String data = ChordOps.GET_SUCCESSOR + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
 		SSLMessage m = new SSLMessage(this.access_peer);
+		System.out.print("Created ssl message \n");
 		m.write(data);
 		m.read();
 		m.close();
 
-		
+		System.out.print("Awaiting connection...");
 		while(!this.connected.get()) {
 		}
+		System.out.print("Connected!");
 		
 		this.updateFingerTable();
 		
@@ -133,7 +131,8 @@ public class Chord {
 			
 			
 		}
-		sllServer.stop();
+
+		this.chordServer.stop();
 		System.out.println("Node left ring");
 	}
 	
@@ -143,7 +142,7 @@ public class Chord {
 	 * @param key Key of node joining
 	 * @param ip Its ip
 	 * @param port Its port
-	 * @param type: -1-> Node joining  >=0: Updating fingerTable of index type
+	 * @param 'type': -1-> Node joining  >=0: Updating fingerTable of index type
 	 * @throws Exception
 	 */
 	public void find_successor(int key, String ip, int port) { 
@@ -449,10 +448,6 @@ public class Chord {
 		return this.peer;
 	}
 	
-	public ServerSocket getServerSocket() {
-		return this.serverSocket;
-	}
-	
 	public void populateFingerTable(InetSocketAddress address) {
 		for(int i = 0; i < M; i++)
 			this.fingerTable.put(i, address);
@@ -563,7 +558,6 @@ public class Chord {
 	}
 
 	public void reclaim(int space) {
-		int needed_space = space;
 		List<Pair<Integer,Integer>> chunkStored = this.getMemory().getStoredChunks();
 		int toRemoveKey = 0;
 		int toRemoveSize = 0;
@@ -579,7 +573,7 @@ public class Chord {
 		System.out.println("Got here!!!");
 
 		
-		while(this.getMemory().getMemoryInUse() > needed_space) {
+		while(this.getMemory().getMemoryInUse() > space) {
 			System.out.println("On the while!!!");
 			toRemoveKey = 0;
 			toRemoveSize = 0;

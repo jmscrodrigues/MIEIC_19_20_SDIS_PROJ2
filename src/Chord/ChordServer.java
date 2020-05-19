@@ -1,28 +1,26 @@
 package Chord;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-public class ChordThread implements Runnable{
+public class ChordServer extends SSLServer implements Runnable{
 
 	private final Chord chord;
+	private final ScheduledThreadPoolExecutor scheduler_executor;
 
-	
-	ChordThread(Chord c){
+	ChordServer(Chord c, int port){
+		super(port);
 		this.chord = c;
+		this.scheduler_executor = this.chord.getPeer().getExecutor();
 	}
 	
 	@Override
 	public void run() {
-		ScheduledThreadPoolExecutor scheduler_executor = this.chord.getPeer().getExecutor();
-		ServerSocket server = this.chord.getServerSocket();
-
-		while (true) {
+		while (this.isServerActive()) {
             try {
-            	scheduler_executor.execute(new ChordMessageHandler(this.chord,server.accept()));
+            	this.scheduler_executor.execute(new ChordMessageHandler(this.chord, this.acceptConnection()));
                 
             } catch (IOException e) {
-            	if (server.isClosed())
+            	if (this.serverIsClosed())
             		System.out.println("Server closed");
             	else
             		System.out.println(e.toString());
@@ -30,5 +28,4 @@ public class ChordThread implements Runnable{
             }
         }
 	}
-
 }

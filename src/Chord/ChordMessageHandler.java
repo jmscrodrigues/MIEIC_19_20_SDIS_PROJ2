@@ -1,50 +1,53 @@
 package Chord;
+import javax.net.ssl.SSLSocket;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 
 public class ChordMessageHandler implements Runnable {
 	Chord chord;
-	Socket socket;
+	SSLSocket socket;
+
+	ChordMessage message;
 	
-	ChordMessageHandler(Chord c, Socket s){
+	ChordMessageHandler(Chord c, SSLSocket s){
 		this.chord = c;
 		this.socket = s;
+
+		this.message = this.readSocket();
 	}
 
 	@Override
 	public void run() {
-		ChordMessage message = this.readSocket();
-
 		if (message == null)
 			return;
 
+		System.out.print("Chord handling message: " + new String(message.data) + "\n" +
+			"Operation: " + message.op + "\n");
+
+		byte [] toSend = "SUCCESS".getBytes();
 		switch (message.op) {
-			case ChordOps.GET_SUCCESSOR: {
-				try {
-					this.chord.find_successor(message.key, message.ip, message.port);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+			case ChordOps.LOOKUP: {
+				InetSocketAddress ret = this.chord.lookup(message.key);
+				if (ret != null)
+					toSend = ("LOOKUPRET " + this.chord.getName() + " " + this.chord.getPort() + " " + ret.getHostName() + " " + ret.getPort()).getBytes();
+				else
+					toSend = "ERROR".getBytes();
 				break;
 			}
-			/*case ChordOps.FIND_FINGER: {
-				try {
-					this.chord.find_successor(message.key, message.ip, message.port, message.index);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				break;
-			}*/
-			case ChordOps.SET_FINGER: {
-				this.chord.setFinger(message.index, new InetSocketAddress(message.ip, message.port));
-				//System.out.println("SETFINGER_RECEIVED");
+			case ChordOps.GET_SUCCESSOR: {
+				this.chord.find_successor(message.key, message.ip, message.port);
 				break;
 			}
 			case ChordOps.SET_SUCCESSOR: {
 				this.chord.setSuccessor(new InetSocketAddress(message.ip, message.port));
+				break;
+			}
+			case ChordOps.GET_PREDECESSOR: {
+				InetSocketAddress pre = this.chord.getPredecessor();
+				toSend = ("PREDECESSOR " + pre.getHostName() + " " + pre.getPort()).getBytes();
+				System.out.println("Sending Predecessor");
 				break;
 			}
 			case ChordOps.SET_PREDECESSOR: {
@@ -53,62 +56,44 @@ public class ChordMessageHandler implements Runnable {
 			}
 			case ChordOps.NEW_FINGER: {
 				this.chord.foundNewFinger(new InetSocketAddress(message.ip, message.port));
-				try {
-					this.chord.sendNotifyNewFinger(message.key, message.ip, message.port);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				this.chord.sendNotifyNewFinger(message.key, message.ip, message.port);
 				break;
 			}
 			case ChordOps.DELETE_FINGER: {
 				this.chord.deleteFinger(message.oldKey, new InetSocketAddress(message.ip, message.port));
-				try {
-					this.chord.sendNotifyDeleteFinger(message.key, message.oldKey, message.ip, message.port);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				break;
-			}
-			case ChordOps.LOOKUP: {
-				InetSocketAddress ret = null;
-				try {
-					ret = this.chord.lookup(message.key);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				this.writeToSocket("LOOKUPRET " + ret.getHostName() + " " + ret.getPort());
+				this.chord.sendNotifyDeleteFinger(message.key, message.oldKey, message.ip, message.port);
 				break;
 			}
 			case ChordOps.PUT: {
-				Message m = new Message(message.buf);
-				m.getHeaderAndBody();
-				this.chord.putInMemory(message.key, m.body);
-				break;
-			}
-			case ChordOps.GET: {
-				Message m = new Message(message.buf);
-				m.getHeaderAndBody();
-				byte[] toSend = this.chord.getInMemory(message.key);
-				if (toSend == null)
-					toSend = "".getBytes();
+				if (this.chord.getMemory().canStoreChunk(message.body.length)
+						&& !this.chord.getMemory().isStoredHere(message.key)
+						&& !this.chord.getMemory().wasInitiatedHere(message.key)) {
 
-				this.writeToSocket(toSend);
-				break;
-			}
-			case ChordOps.GET_DATA: {
-				try {
-					this.chord.sendData(message.key, message.ip, message.port);
-				} catch (Exception e) {
-					e.printStackTrace();
+					this.chord.putInMemory(message.key, message.body);
+					if (message.replication > 1)
+						this.chord.putInSuccessor(message.key, message.body,message.replication - 1);
+				} else {
+					System.out.println("Could not store file, redirecting");
+					this.chord.putInSuccessor(message.key, message.body, message.replication);
 				}
 				break;
 			}
-			case ChordOps.GET_PREDECESSOR: {
-				InetSocketAddress pre = this.chord.getPredecessor();
-				//Message out = new Message("PREDECESSOR " + pre.getHostName() + " " + pre.getPort());
-				//out.sendMessage(socket);
-				System.out.println("Sending Predecessor");
-				writeToSocket("PREDECESSOR " + pre.getHostName() + " " + pre.getPort());
+			case ChordOps.GET: {
+				if (!this.chord.getMemory().chunkRedirected(message.key))
+					toSend = this.chord.getInMemory(message.key);
+				else
+					toSend = this.chord.getFromSuccessor(message.key, message.replication);
+
+				if (toSend == null) {
+					if (message.replication > 1)
+						this.chord.getFromSuccessor(message.key,message.replication - 1);
+
+					toSend = "ERROR".getBytes();
+				}
+				break;
+			}
+			case ChordOps.GET_DATA: {
+				this.chord.sendData(message.key, message.ip, message.port);
 				break;
 			}
 			case ChordOps.NOTIFY: {
@@ -116,24 +101,30 @@ public class ChordMessageHandler implements Runnable {
 				break;
 			}
 			case ChordOps.REMOVE: {
-				Message m = new Message(message.buf);
-				m.getHeaderAndBody();
+				if (!this.chord.getMemory().chunkRedirected(message.key)) {
+					toSend = this.chord.removeInMemory(message.key);
+					if (message.replication > 1)
+						this.chord.removeFromSuccessor(message.key,message.replication - 1);
+				} else {
+					toSend = this.chord.removeInMemory(message.key);
+					if (message.replication > 1)
+						toSend = this.chord.removeFromSuccessor(message.key,message.replication - 1);
+				}
 
-				byte[] toSend = this.chord.removeInMemory(message.key);
-				if(toSend == null) 
-					toSend = "".getBytes();
-				
-				this.writeToSocket(toSend);
+				if (toSend == null)
+					toSend = "ERROR".getBytes();
+
 				break;
 			}
 		}
+
+		this.writeToSocket(toSend);
 
 		try {
 			socket.close();
 		} catch (IOException e) {
 			System.err.print("Failed to close socket\n");
 		}
-
 	}
 
 	private ChordMessage readSocket() {
@@ -152,10 +143,6 @@ public class ChordMessageHandler implements Runnable {
 		}
 
 		return new ChordMessage(buf);
-	}
-
-	private void writeToSocket(String message) {
-		this.writeToSocket(message.getBytes());
 	}
 
 	private void writeToSocket(byte[] message) {
