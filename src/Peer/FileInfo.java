@@ -34,6 +34,10 @@ public class FileInfo {
             this.fileParts.add(null);
         }
     }
+    
+    public void addId(int key) {
+    	this.fileData.addId(key);
+    }
 	
 	private void fileDivision() {
         int divSize = 16000;

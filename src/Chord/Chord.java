@@ -219,7 +219,7 @@ public class Chord {
 		}
 	}
 	
-	public void put	(String identifier, byte[] data ,  int replication) {
+	public int put(String identifier, byte[] data ,  int replication) {
 		//TODO:: it is possible to check here if chunk targets for this peer
 		int key = this.hash(identifier);
 		InetSocketAddress dest = this.lookup(key);
@@ -227,6 +227,7 @@ public class Chord {
 		m.write(ChordOps.PUT + " " + key + " "  + replication, data);
 		m.read();
 		m.close();
+		return key;
 	}
 	
 	public byte[] get(String identifier, int replication) {
