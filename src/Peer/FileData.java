@@ -1,6 +1,8 @@
 package Peer;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileData implements Serializable {
 	
@@ -11,6 +13,8 @@ public class FileData implements Serializable {
 	private int desiredReplicationDegree;
 	
 	private int numberOfChunks;
+	
+	private List<Integer> chunksIds = new ArrayList<Integer>();
 	
 	FileData(String fp, int nChunks,int rep){
 		filepath = fp;
@@ -24,5 +28,17 @@ public class FileData implements Serializable {
 	public int getReplicationDegree() {
 		return this.desiredReplicationDegree;
 	}
+	
+	public void addId(int key) {
+		this.chunksIds.add(key);
+	}
+	
+	public boolean isChunkFromHere(int key) {
+		for(Integer k : this.chunksIds)
+			if(k == key)
+				return true;
+		return false;			
+	}
+	
 	
 }

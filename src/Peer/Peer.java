@@ -83,8 +83,10 @@ public class Peer {
         if (!file.doesFileExists()) {
         	return "File " + file_name +" not found";
         }        
+
         for (int i = 0; i < file.getNumberOfParts(); i++) {
-        	this.chord.put(file_name + "_" + i, file.getFilePart(i), replication);
+        	int key = this.chord.put(file_name + "_" + i, file.getFilePart(i), replication);
+        	file.addId(key);
         	System.out.println(i);
         }
         
@@ -115,6 +117,7 @@ public class Peer {
 			return "File not known";
 		int numChunks = fileData.getNumChunks();
 		for(int i = 0; i < numChunks ; i++) {
+			System.out.println("sending delete of chunk: " + i);
 			this.chord.remove(file_name + "_" + i, fileData.getReplicationDegree());
 		}
         this.chord.getMemory().removeBackupFile(file_name);

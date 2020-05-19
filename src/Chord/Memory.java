@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import Peer.FileData;
@@ -146,6 +147,24 @@ public class Memory {
 	/*public List<Pair<Integer,Integer>> getChunkSizeList() {
 		return this.chunkSize;
 	} */
+	
+	public boolean isStoredHere(int key) {
+		for(int i = 0; i < this.chunksStored.size();i++) {
+    		Pair<Integer,Integer> p = this.chunksStored.get(i);
+    		if(p.getKey() == key)
+    			return true;
+    	}
+		return false;
+	}
+	
+	public boolean wasInitiatedHere(int key) {
+		for (Entry<String, FileData> entry : this.backupFiles.entrySet()) {
+		      FileData value = entry.getValue();
+		      if(value.isChunkFromHere(key))
+		    	  return true;
+		    }
+		return false;
+	}
     
     public String status() {
     	String str = "Key \t Length\n";

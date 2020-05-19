@@ -73,7 +73,9 @@ public class SSLMessageHandler implements Runnable{
 				int key = Integer.parseInt(parts[1]);
 				int replication = Integer.parseInt(parts[2]);
 				this.getHeaderAndBody();
-				if(this.chord.getMemory().canStoreChunk(body.length) == true) {
+				if(this.chord.getMemory().canStoreChunk(body.length) == true 
+						&& this.chord.getMemory().isStoredHere(key) == false
+						&& this.chord.getMemory().wasInitiatedHere(key) == false) {
 					this.chord.putInMemory(key, body);
 					if(replication > 1)
 						this.chord.putInSuccessor(key,body,replication-1);
@@ -105,7 +107,7 @@ public class SSLMessageHandler implements Runnable{
 					if(replication > 1)
 						this.chord.removeFromSuccessor(key,replication-1);
 				}else {
-					this.chord.removeInMemory(key);
+					toSend = this.chord.removeInMemory(key);
 					if(replication > 1)
 						toSend = this.chord.removeFromSuccessor(key,replication-1);
 				}
