@@ -3,7 +3,9 @@ import javax.net.ssl.SSLSocket;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 
 public class ChordMessageHandler implements Runnable {
 	Chord chord;
@@ -132,7 +134,7 @@ public class ChordMessageHandler implements Runnable {
 	private ChordMessage readSocket() {
 		int len;
 		byte[] buf;
-		System.out.println("reading");
+		System.out.println("reading from socket");
 		try {
 			DataInputStream dis = new DataInputStream(socket.getInputStream());
 			len = dis.readInt();
@@ -140,27 +142,32 @@ public class ChordMessageHandler implements Runnable {
 			if (len > 0) dis.readFully(buf);
 
 		} catch (IOException e) {
+			System.err.println("Error reading message.");
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println("done reading");
+		System.out.println("done reading from socket :" + new String(buf));
 		return new ChordMessage(buf);
 	}
 
-	private void writeToSocket(byte[] message) {
-		System.out.println("to send: " + new String(message));
+	private void writeToSocket(byte[] temp) {
+		byte[] message = new byte[temp.length+1];
+		System.arraycopy(temp, 0, message, 0, temp.length);
+		message[message.length-1] = 0;
+		System.out.println("to respond: " + new String(message));
 		try {
-			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-
-			dos.writeInt(message.length);
-			dos.write(message, 0, message.length);
-			dos.flush();
+			OutputStream out = this.socket.getOutputStream(); 
+    	    DataOutputStream dos = new DataOutputStream(out);
+    	    dos.writeInt(message.length);
+    	    dos.write(message,0,message.length);
+    	    dos.flush();
 
 		} catch (IOException e) {
-			System.err.println("Error sending message.");
+			System.err.println("Error writing message.");
 			e.printStackTrace();
 			System.exit(-1);
 		}
+		System.out.println("done responding");
 	}
 
 }

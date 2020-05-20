@@ -69,12 +69,11 @@ public class Chord {
 		
 		String data = ChordOps.GET_SUCCESSOR + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
 		SSLMessage m = new SSLMessage(this.access_peer);
-		System.out.print("Created ssl message \n");
 		m.write(data);
 		m.read();
 		m.close();
 
-		/*System.out.print("Awaiting connection...");
+		System.out.print("Awaiting connection...");
 		while(!this.connected.get()) {
 		}
 		System.out.print("Connected!");
@@ -86,7 +85,7 @@ public class Chord {
 		m = new SSLMessage(this.successor);
 		m.write(ChordOps.GET_DATA + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 		m.read();
-		m.close();*/
+		m.close();
 
 		System.out.println("Node joined ring");
 		
@@ -155,10 +154,12 @@ public class Chord {
 			this.setSuccessor(new_peer);
     		m.write(ChordOps.SET_SUCCESSOR + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
     		m.read();
+    		m.close();
+    		m = new SSLMessage(this.predecessor);
     		m.write(ChordOps.SET_PREDECESSOR + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
     		m.read();
     		m.close();
-    		//this.populateFingerTable(new_peer);
+    		this.populateFingerTable(new_peer);
 			return;
 		}
 		//se a chave que se procura estiver entre mim e o meu successor, logo deu hit!
@@ -171,6 +172,7 @@ public class Chord {
     		m = new SSLMessage(ip, port);
     		m.write(ChordOps.SET_SUCCESSOR + " " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
     		m.read();
+    		m.close();
 
 			
     		InetSocketAddress newFinger = new InetSocketAddress(ip, port);

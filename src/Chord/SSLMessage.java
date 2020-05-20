@@ -2,12 +2,14 @@ package Chord;
 
 import javax.net.ssl.*;
 
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.security.KeyStore;
 import java.util.Arrays;
 
@@ -36,7 +38,7 @@ public class SSLMessage {
             return;
         }
 
-        System.out.print("Initiating connection...\n");
+        //System.out.print("Initiating connection...\n");
 
         try {
             this.connect();
@@ -45,7 +47,7 @@ public class SSLMessage {
             e.printStackTrace();
         }
 
-        System.out.print("Connection established\n");
+        //System.out.print("Connection established\n");
     }
 
     private void connect() throws Exception {
@@ -71,8 +73,12 @@ public class SSLMessage {
         this.write(data);
     }
     
-    public void write(byte[] message) {
-    	
+    public void write(byte[] temp) {	
+    	byte[] message = new byte[temp.length+1];
+		System.arraycopy(temp, 0, message, 0, temp.length);
+		message[message.length-1] = 0;
+    	System.out.println("mensagem para enviar: " + new String(message)+" - " + message.length);
+
         try {
         	OutputStream out = this.sslSocket.getOutputStream(); 
     	    DataOutputStream dos = new DataOutputStream(out);
@@ -83,20 +89,25 @@ public class SSLMessage {
             System.err.print("Failed to write to ssl socket\n");
             e.printStackTrace();
         }
+        System.out.println("mensagem enviada");
     }
 
     public byte[] read() {
-    	byte [] buf = new byte[64000];
-    	int n;
+    	byte [] buf = null;
+    	int len;
+    	System.out.println("a ler resposta");
         try {
-            //return this.sslSocket.getInputStream().readAllBytes();
-        	n = this.sslSocket.getInputStream().read(buf);
+        	DataInputStream dis = new DataInputStream(this.sslSocket.getInputStream());
+			len = dis.readInt();
+			buf = new byte[len];
+			if (len > 0) dis.readFully(buf);
         } catch (IOException e) {
             System.err.print("Failed to read from ssl socket\n");
             e.printStackTrace();
             return null;
         }
-        return Arrays.copyOfRange(buf, 0, n);
+        System.out.println("resposta: " + new String(buf));
+        return buf;
     }
 
     public void close() {
