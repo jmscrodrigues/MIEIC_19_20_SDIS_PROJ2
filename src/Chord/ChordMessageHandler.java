@@ -33,11 +33,13 @@ public class ChordMessageHandler implements Runnable {
 		byte [] toSend = "SUCCESS".getBytes();
 		switch (message.op) {
 			case ChordOps.LOOKUP: {
+				System.out.println("a fazer lookup");
 				InetSocketAddress ret = this.chord.lookup(message.key);
 				if (ret != null)
 					toSend = ("LOOKUPRET " + this.chord.getName() + " " + this.chord.getPort() + " " + ret.getHostName() + " " + ret.getPort()).getBytes();
 				else
 					toSend = "ERROR".getBytes();
+				System.out.println("a sair lookup");
 				break;
 			}
 			case ChordOps.GET_SUCCESSOR: {
