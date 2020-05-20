@@ -147,12 +147,6 @@ public class ChordMessageHandler implements Runnable {
 	}
 
 	private ChordMessage readSocket() {
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 		int len;
 		byte[] buf = null;;
 		if(debug) System.out.println("reading from socket");

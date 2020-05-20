@@ -110,8 +110,14 @@ public class Peer {
 			file.putFilePart(i, ret);
 			System.out.println(file_name + ":" + (i + 1) + "/" + file.getNumberOfParts());
 		}
+		
+		while(!file.isFileRestored()) {
+		}
+		if(file.isCorrupted())
+			return "Restor failed";
+		
         file.exportFile(file_name, "./peer" + this.chord.getKey() + "/");
-        return "Backup with success";
+        return "Restored with success";
 	}
 	public String delete(String file_name) {
 		

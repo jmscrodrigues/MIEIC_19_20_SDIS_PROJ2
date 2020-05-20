@@ -32,7 +32,7 @@ public class Memory {
 
 	//private final List<Pair<Integer,Integer>> chunkSize = new ArrayList<Pair<Integer,Integer>>();
 	
-	private final int maxMemory = 100000;
+	private final int maxMemory = 10000000;
 	private int memoryInUse;
 	
 	String path;

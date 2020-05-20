@@ -259,6 +259,8 @@ public class Chord {
 	}
 	
 	public void putInSuccessor(int key, byte[] body, int replication) {
+		if(this.successor == null)
+			return;
 		if(this.betweenOpenClose(this.key, this.hash(successor), key)) // If it has made a complete turn arrounf the ring
 			return;
 		this.memory.addRedirectedChunk(key);
@@ -268,6 +270,8 @@ public class Chord {
 		m.close();
 	}
 	public byte[] getFromSuccessor(int key, int replication) {
+		if(this.successor == null)
+			return null;
 		SSLMessage m = new SSLMessage(this.successor);
 		m.write(ChordOps.GET + " " + key + " " + replication);
 		byte[] d = m.read();
@@ -275,6 +279,8 @@ public class Chord {
 		return d;
 	}
 	public byte[] removeFromSuccessor(int key, int replication) {
+		if(this.successor == null)
+			return null;
 		SSLMessage m = new SSLMessage(this.successor);
 		m.write(ChordOps.REMOVE + " " + key + " " + replication);
 		byte[] d = m.read();

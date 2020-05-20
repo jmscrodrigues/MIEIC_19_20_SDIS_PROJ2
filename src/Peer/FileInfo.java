@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileInfo {
 	
@@ -15,6 +16,9 @@ public class FileInfo {
 	private File file;
 	
 	private FileData fileData;
+	
+	private AtomicInteger restoredChunks = new AtomicInteger(0);
+	private AtomicInteger fullChunks = new AtomicInteger(0);
 	
 	public FileInfo(String path, int replicationDegree) {
         this.file = new File(path);
@@ -90,6 +94,17 @@ public class FileInfo {
     
     public void putFilePart(int i, byte[] d) {
         this.fileParts.set(i,d);
+        this.restoredChunks.incrementAndGet();
+        if(d != null)
+        	this.fullChunks.incrementAndGet();
+    }
+    
+    public boolean isFileRestored() {
+    	return this.restoredChunks.get() == this.getNumberOfParts();
+    }
+    
+    public boolean isCorrupted() {
+    	return this.restoredChunks.get() != this.fullChunks.get();
     }
     
     public FileData getFileData() {
