@@ -88,15 +88,22 @@ public class ChordMessageHandler implements Runnable {
 				break;
 			}
 			case ChordOps.GET: {
-				if (!this.chord.getMemory().chunkRedirected(message.key))
+				if(this.chord.getMemory().isStoredHere(message.key)) {
+					toSend = this.chord.getInMemory(message.key);
+					if(toSend == null)
+						if (message.replication > 1)
+							toSend = this.chord.getFromSuccessor(message.key,message.replication - 1);
+						
+				}else {
+					if (this.chord.getMemory().chunkRedirected(message.key))
+						toSend = this.chord.getFromSuccessor(message.key, message.replication);
+				}
+				/*if (!this.chord.getMemory().chunkRedirected(message.key))
 					toSend = this.chord.getInMemory(message.key);
 				else
-					toSend = this.chord.getFromSuccessor(message.key, message.replication);
+					toSend = this.chord.getFromSuccessor(message.key, message.replication);*/
 
 				if (toSend == null) {
-					if (message.replication > 1)
-						this.chord.getFromSuccessor(message.key,message.replication - 1);
-
 					toSend = "ERROR".getBytes();
 				}
 				break;
