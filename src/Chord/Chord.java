@@ -118,10 +118,11 @@ public class Chord {
 			List<Pair<Integer,Integer>> list = this.memory.getStoredChunks();
 			for(int i = 0; i < list.size();i++) {
 				int chunkId = list.get(i).getKey();
-				m = new SSLMessage(this.successor);
+				/*m = new SSLMessage(this.successor);
 				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
 				m.read();
-				m.close();
+				m.close();*/
+				this.putInSuccessor(chunkId, this.memory.get(chunkId), 1);
 				this.removeInMemory(chunkId);
 				i--;
 			}
@@ -294,7 +295,7 @@ public class Chord {
 			int chunkId = storedChunks.get(i).getKey();
 			if (betweenOpenClose(this.getKey(), key, chunkId)) {
 				SSLMessage m = new SSLMessage(pre);
-				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
+				m.write(ChordOps.PUT + " " + chunkId + " "  + "1", this.memory.get(chunkId));
 				m.read();
 				m.close();
 				this.removeInMemory(chunkId);

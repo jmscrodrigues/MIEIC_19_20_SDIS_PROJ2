@@ -29,7 +29,6 @@ public class ChordMessage {
         String[] parts = message.split(" ");
 
         this.op = parts[0];
-        System.out.println("ola");
         if (op.equals(ChordOps.DELETE_FINGER)) {
             this.key = Integer.parseInt(parts[1]);
             this.oldKey = Integer.parseInt(parts[2]);
