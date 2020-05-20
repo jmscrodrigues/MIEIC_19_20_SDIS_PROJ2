@@ -15,6 +15,8 @@ public class ChordMessageHandler implements Runnable {
 		this.chord = c;
 		this.socket = s;
 
+		System.out.print("New connection established\n");
+
 		this.message = this.readSocket();
 	}
 

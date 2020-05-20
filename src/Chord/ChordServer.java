@@ -2,7 +2,7 @@ package Chord;
 import java.io.IOException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-public class ChordServer extends SSLServer implements Runnable{
+public class ChordServer extends SSLServer implements Runnable {
 
 	private final Chord chord;
 	private final ScheduledThreadPoolExecutor scheduler_executor;
@@ -17,6 +17,7 @@ public class ChordServer extends SSLServer implements Runnable{
 	public void run() {
 		while (this.isServerActive()) {
             try {
+            	System.out.print("Awaiting new connections...\n");
             	this.scheduler_executor.execute(new ChordMessageHandler(this.chord, this.acceptConnection()));
                 
             } catch (IOException e) {

@@ -24,9 +24,9 @@ public class SSLServer {
             e.printStackTrace();
         }
 
-        System.out.print("Created ssl server socket\n");
-
         this.serverSocket.setNeedClientAuth(true);
+
+        System.out.print("Created ssl server socket\n");
     }
 
     public SSLSocket acceptConnection() throws IOException {
