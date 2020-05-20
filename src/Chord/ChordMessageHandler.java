@@ -13,11 +13,13 @@ public class ChordMessageHandler implements Runnable {
 
 	ChordMessage message;
 	
+	private boolean debug = false;
+	
 	ChordMessageHandler(Chord c, SSLSocket s){
 		this.chord = c;
 		this.socket = s;
 
-		System.out.print("New connection established\n");
+		if(debug) System.out.print("New connection established\n");
 
 		this.message = this.readSocket();
 	}
@@ -27,19 +29,16 @@ public class ChordMessageHandler implements Runnable {
 		if (message == null)
 			return;
 
-		System.out.print("Chord handling message: " + new String(message.data) + "\n" +
-			"Operation: " + message.op + "\n");
+		if(debug) System.out.print("Chord handling message: " + new String(message.data) + "\n" + "Operation: " + message.op + "\n");
 
 		byte [] toSend = "SUCCESS".getBytes();
 		switch (message.op) {
 			case ChordOps.LOOKUP: {
-				System.out.println("a fazer lookup");
 				InetSocketAddress ret = this.chord.lookup(message.key);
 				if (ret != null)
 					toSend = ("LOOKUPRET " + this.chord.getName() + " " + this.chord.getPort() + " " + ret.getHostName() + " " + ret.getPort()).getBytes();
 				else
 					toSend = "ERROR".getBytes();
-				System.out.println("a sair lookup");
 				break;
 			}
 			case ChordOps.GET_SUCCESSOR: {
@@ -74,12 +73,16 @@ public class ChordMessageHandler implements Runnable {
 				if (this.chord.getMemory().canStoreChunk(message.body.length)
 						&& !this.chord.getMemory().isStoredHere(message.key)
 						&& !this.chord.getMemory().wasInitiatedHere(message.key)) {
-
 					this.chord.putInMemory(message.key, message.body);
 					if (message.replication > 1)
 						this.chord.putInSuccessor(message.key, message.body,message.replication - 1);
 				} else {
-					System.out.println("Could not store file, redirecting");
+					if(this.chord.getMemory().canStoreChunk(message.body.length) == false)
+						System.out.println("No space for chunk, redirecting");
+					if(this.chord.getMemory().isStoredHere(message.key))
+						System.out.println("Chunk already stored, redirecting");
+					if(this.chord.getMemory().wasInitiatedHere(message.key))
+						System.out.println("Chunk backedup from here, redirecting");
 					this.chord.putInSuccessor(message.key, message.body, message.replication);
 				}
 				break;
@@ -98,28 +101,31 @@ public class ChordMessageHandler implements Runnable {
 				}
 				break;
 			}
-			case ChordOps.GET_DATA: {
-				this.chord.sendData(message.key, message.ip, message.port);
-				break;
-			}
-			case ChordOps.NOTIFY: {
-				this.chord.notify(new InetSocketAddress(message.ip, message.port));
-				break;
-			}
 			case ChordOps.REMOVE: {
 				if (!this.chord.getMemory().chunkRedirected(message.key)) {
 					toSend = this.chord.removeInMemory(message.key);
 					if (message.replication > 1)
 						this.chord.removeFromSuccessor(message.key,message.replication - 1);
 				} else {
+					System.out.println("Chunk redirected, removing here if exists and from sucessor");
 					toSend = this.chord.removeInMemory(message.key);
-					if (message.replication > 1)
+					if(toSend == null)
+						toSend = this.chord.removeFromSuccessor(message.key,message.replication);
+					else if (message.replication > 1)
 						toSend = this.chord.removeFromSuccessor(message.key,message.replication - 1);
 				}
 
 				if (toSend == null)
 					toSend = "ERROR".getBytes();
 
+				break;
+			}
+			case ChordOps.GET_DATA: {
+				this.chord.sendData(message.key, message.ip, message.port);
+				break;
+			}
+			case ChordOps.NOTIFY: {
+				this.chord.notify(new InetSocketAddress(message.ip, message.port));
 				break;
 			}
 		}
@@ -142,7 +148,7 @@ public class ChordMessageHandler implements Runnable {
 		}
 		int len;
 		byte[] buf = null;;
-		System.out.println("reading from socket");
+		if(debug) System.out.println("reading from socket");
 		try {
 			DataInputStream dis = new DataInputStream(socket.getInputStream());
 			len = dis.readInt();
@@ -155,12 +161,12 @@ public class ChordMessageHandler implements Runnable {
 			e.printStackTrace();
 			//return null;
 		}
-		System.out.println("done reading from socket :" + new String(buf));
+		if(debug) System.out.println("done reading from socket :" + new String(buf));
 		return new ChordMessage(buf);
 	}
 
 	private void writeToSocket(byte[] message) {
-		System.out.println("to respond: " + new String(message));
+		if(debug) System.out.println("to respond: " + new String(message));
 		try {
 			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
@@ -172,7 +178,7 @@ public class ChordMessageHandler implements Runnable {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		System.out.println("done responding");
+		if(debug) System.out.println("done responding");
 	}
 
 }

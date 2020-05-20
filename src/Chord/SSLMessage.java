@@ -22,6 +22,8 @@ public class SSLMessage {
 
     private SSLSocket sslSocket;
     
+    private boolean debug = false;
+    
     public SSLMessage(InetSocketAddress address) {
     	this(address.getHostName(), address.getPort());
     }
@@ -74,7 +76,7 @@ public class SSLMessage {
     }
     
     public void write(byte[] message) {
-    	System.out.println("mensagem para enviar: " + new String(message)+" - " + message.length);
+    	if(debug) System.out.println("mensagem para enviar: " + new String(message)+" - " + message.length);
 
         try {
         	OutputStream out = this.sslSocket.getOutputStream(); 
@@ -86,13 +88,13 @@ public class SSLMessage {
             System.err.print("Failed to write to ssl socket\n");
             e.printStackTrace();
         }
-        System.out.println("mensagem enviada");
+        if(debug) System.out.println("mensagem enviada");
     }
 
     public byte[] read() {
     	byte [] buf = null;
     	int len;
-    	System.out.println("a ler resposta");
+    	if(debug) System.out.println("a ler resposta");
         try {
         	DataInputStream dis = new DataInputStream(this.sslSocket.getInputStream());
 			len = dis.readInt();
@@ -103,7 +105,7 @@ public class SSLMessage {
             e.printStackTrace();
             return null;
         }
-        System.out.println("resposta: " + new String(buf));
+        if(debug) System.out.println("resposta: " + new String(buf));
         return buf;
     }
 

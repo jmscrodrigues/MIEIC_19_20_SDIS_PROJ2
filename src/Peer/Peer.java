@@ -85,15 +85,15 @@ public class Peer {
         if (!file.doesFileExists()) {
         	return "File " + file_name +" not found";
         }        
-
-        for (int i = 0; i < file.getNumberOfParts(); i++) {
-        	int key = this.chord.put(file_name + "_" + i, file.getFilePart(i), replication);
-        	file.addId(key);
-        	System.out.println(i);
-        }
-        
         //TODO generate unique id through hash
         this.chord.getMemory().addBackupFile(file_name, file.getFileData());
+        for (int i = 0; i < file.getNumberOfParts(); i++) {
+        	int key = this.chord.hash(file_name + "_" + i);
+        	file.addId(key);
+        	this.chord.put(file_name + "_" + i, file.getFilePart(i), replication);
+        	System.out.println(file_name + ":" + (i + 1) + "/" + file.getNumberOfParts());
+        }
+  
         
         return "Backup with success";
 	}
@@ -108,6 +108,7 @@ public class Peer {
 		for(int i = 0; i < numChunks ; i++) {
 			byte[] ret = this.chord.get(file_name + "_" + i , fileData.getReplicationDegree());
 			file.putFilePart(i, ret);
+			System.out.println(file_name + ":" + (i + 1) + "/" + file.getNumberOfParts());
 		}
         file.exportFile(file_name, "./peer" + this.chord.getKey() + "/");
         return "Backup with success";

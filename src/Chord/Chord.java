@@ -529,7 +529,7 @@ public class Chord {
 	private int hash(InetSocketAddress addrss) {
 		return hash(addrss.getHostName()+":"+addrss.getPort());
 	}
-	private int hash(String addrss) {
+	public int hash(String addrss) {
 		return hash(addrss,M);
 	}
 	private int hash(String fileString, int bits) {

@@ -93,12 +93,7 @@ public class Memory {
     			break;
     		}
 		}
-		/*for(Pair<Integer,Integer> pair : this.chunkSize) {
-			if(pair.getKey() == chunkId) {
-				this.chunkSize.remove(pair);
-				break;
-			}
-		}*/
+
     	memoryInUse-=d.length;
     	return d;
     }
@@ -167,10 +162,14 @@ public class Memory {
 	}
     
     public String status() {
-    	String str = "Key \t Length\n";
+    	String str = "Chunks Stored:\nKey \t Length\n";
     	for(int i = 0; i < this.chunksStored.size();i++) {
     		Pair<Integer,Integer> p = this.chunksStored.get(i);
     		str += p.getKey() + " -> " + p.getValue()  + "\n";
+    	}
+    	str+="\n\nChunksRedirected:\nKey";
+    	for(int i = 0; i < this.chunksRedirected.size();i++) {
+    		str+=this.chunksRedirected.get(i)+"\n";
     	}
     	str += "\n\nMax memory: " + this.maxMemory + "\t Memory in use: " + this.memoryInUse;
     	return str;
