@@ -73,10 +73,7 @@ public class SSLMessage {
         this.write(data);
     }
     
-    public void write(byte[] temp) {	
-    	byte[] message = new byte[temp.length+1];
-		System.arraycopy(temp, 0, message, 0, temp.length);
-		message[message.length-1] = 0;
+    public void write(byte[] message) {
     	System.out.println("mensagem para enviar: " + new String(message)+" - " + message.length);
 
         try {
@@ -84,7 +81,7 @@ public class SSLMessage {
     	    DataOutputStream dos = new DataOutputStream(out);
     	    dos.writeInt(message.length);
     	    dos.write(message,0,message.length);
-    	    dos.flush();
+
         } catch (IOException e) {
             System.err.print("Failed to write to ssl socket\n");
             e.printStackTrace();

@@ -29,7 +29,7 @@ public class ChordMessage {
         String[] parts = message.split(" ");
 
         this.op = parts[0];
-
+        System.out.println("ola");
         if (op.equals(ChordOps.DELETE_FINGER)) {
             this.key = Integer.parseInt(parts[1]);
             this.oldKey = Integer.parseInt(parts[2]);
@@ -41,18 +41,19 @@ public class ChordMessage {
             this.replication = Integer.parseInt(parts[2]);
             return;
         }
-
+        
         if (parts.length > 1)
-            this.key = Integer.parseInt(parts[1]);
-
+            this.key = Integer.parseInt(parts[1].replaceAll("\\D", ""));
+        
         if (parts.length > 2)
             this.ip = parts[2];
-
+        
         if (parts.length > 3)
             this.port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
-
+        
         if (parts.length > 4)
             this.index = Integer.parseInt(parts[4]);
+
     }
 
     public void getHeaderAndBody() {

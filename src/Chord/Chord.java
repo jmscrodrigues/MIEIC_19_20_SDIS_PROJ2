@@ -115,16 +115,16 @@ public class Chord {
 			
 			System.out.println("Transferring data to successor initiated");
 			
-			m = new SSLMessage(this.successor);
 			List<Pair<Integer,Integer>> list = this.memory.getStoredChunks();
 			for(int i = 0; i < list.size();i++) {
 				int chunkId = list.get(i).getKey();
+				m = new SSLMessage(this.successor);
 				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
 				m.read();
+				m.close();
 				this.removeInMemory(chunkId);
 				i--;
 			}
-			m.close();
 			
 			System.out.println("Transferring data to successor done");	
 			
@@ -290,17 +290,17 @@ public class Chord {
 	public void sendData(int key, String ip, int port) {
 		InetSocketAddress pre = new InetSocketAddress(ip,port);
 		List<Pair<Integer,Integer>> storedChunks = this.memory.getStoredChunks();
-		SSLMessage m = new SSLMessage(pre);
 		for(int i=0;i<storedChunks.size();i++) {		
 			int chunkId = storedChunks.get(i).getKey();
 			if (betweenOpenClose(this.getKey(), key, chunkId)) {
+				SSLMessage m = new SSLMessage(pre);
 				m.write(ChordOps.PUT + " " + chunkId, this.memory.get(chunkId));
 				m.read();
+				m.close();
 				this.removeInMemory(chunkId);
 				i--;
 			}
 		}
-		m.close();
 	}
 	
 	/*

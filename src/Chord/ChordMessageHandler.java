@@ -134,8 +134,14 @@ public class ChordMessageHandler implements Runnable {
 	}
 
 	private ChordMessage readSocket() {
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		int len;
-		byte[] buf;
+		byte[] buf = null;;
 		System.out.println("reading from socket");
 		try {
 			DataInputStream dis = new DataInputStream(socket.getInputStream());
@@ -143,26 +149,23 @@ public class ChordMessageHandler implements Runnable {
 			buf = new byte[len];
 			if (len > 0) dis.readFully(buf);
 
+
 		} catch (IOException e) {
 			System.err.println("Error reading message.");
 			e.printStackTrace();
-			return null;
+			//return null;
 		}
 		System.out.println("done reading from socket :" + new String(buf));
 		return new ChordMessage(buf);
 	}
 
-	private void writeToSocket(byte[] temp) {
-		byte[] message = new byte[temp.length+1];
-		System.arraycopy(temp, 0, message, 0, temp.length);
-		message[message.length-1] = 0;
+	private void writeToSocket(byte[] message) {
 		System.out.println("to respond: " + new String(message));
 		try {
-			OutputStream out = this.socket.getOutputStream(); 
-    	    DataOutputStream dos = new DataOutputStream(out);
-    	    dos.writeInt(message.length);
-    	    dos.write(message,0,message.length);
-    	    dos.flush();
+			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+
+			dos.writeInt(message.length);
+			dos.write(message, 0, message.length);
 
 		} catch (IOException e) {
 			System.err.println("Error writing message.");
