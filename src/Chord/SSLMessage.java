@@ -1,10 +1,15 @@
 package Chord;
 
 import javax.net.ssl.*;
+
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
+import java.util.Arrays;
 
 public class SSLMessage {
 	
@@ -67,8 +72,13 @@ public class SSLMessage {
     }
     
     public void write(byte[] message) {
+    	
         try {
-            this.sslSocket.getOutputStream().write(message);
+        	OutputStream out = this.sslSocket.getOutputStream(); 
+    	    DataOutputStream dos = new DataOutputStream(out);
+    	    dos.writeInt(message.length);
+    	    dos.write(message,0,message.length);
+    	    dos.flush();
         } catch (IOException e) {
             System.err.print("Failed to write to ssl socket\n");
             e.printStackTrace();
@@ -76,13 +86,17 @@ public class SSLMessage {
     }
 
     public byte[] read() {
+    	byte [] buf = new byte[64000];
+    	int n;
         try {
-            return this.sslSocket.getInputStream().readAllBytes();
+            //return this.sslSocket.getInputStream().readAllBytes();
+        	n = this.sslSocket.getInputStream().read(buf);
         } catch (IOException e) {
-            System.err.print("Failed to write to ssl socket\n");
+            System.err.print("Failed to read from ssl socket\n");
             e.printStackTrace();
             return null;
         }
+        return Arrays.copyOfRange(buf, 0, n);
     }
 
     public void close() {
@@ -95,7 +109,7 @@ public class SSLMessage {
     }
 
     private SSLSocket createSocket() throws Exception {
-        SSLContext context;
+        /*SSLContext context;
         KeyManagerFactory keyManagerFactory;
         KeyStore ks;
         char[] passphrase = "passphrase".toCharArray();
@@ -110,6 +124,36 @@ public class SSLMessage {
 
         context.init(keyManagerFactory.getKeyManagers(), null, null);
 
+        SSLSocketFactory sslSocketFactory = context.getSocketFactory();*/
+    	
+    	SSLContext context;
+    	context = SSLContext.getInstance("SSL");
+    	
+    	KeyStore keyStore = KeyStore.getInstance("JKS");
+        InputStream keyStoreIS = new FileInputStream("./client.jks");
+        try {
+            keyStore.load(keyStoreIS, "storepass".toCharArray());
+        } finally {
+            keyStoreIS.close();
+        }
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(keyStore, "keypass".toCharArray());
+        KeyManager[] keys = kmf.getKeyManagers();
+        
+        KeyStore trustStore = KeyStore.getInstance("JKS");
+        InputStream trustStoreIS = new FileInputStream("./trustedCerts.jks");
+        try {
+            trustStore.load(trustStoreIS, "storepass".toCharArray());
+        } finally {
+            trustStoreIS.close();
+        }
+        TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustFactory.init(trustStore);
+        
+        TrustManager[] trusts = trustFactory.getTrustManagers();
+
+        context.init(keys, trusts, null); 
+        
         SSLSocketFactory sslSocketFactory = context.getSocketFactory();
 
         return (SSLSocket) sslSocketFactory.createSocket(this.ip, this.port);

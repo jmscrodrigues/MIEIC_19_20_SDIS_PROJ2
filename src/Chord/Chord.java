@@ -74,7 +74,7 @@ public class Chord {
 		m.read();
 		m.close();
 
-		System.out.print("Awaiting connection...");
+		/*System.out.print("Awaiting connection...");
 		while(!this.connected.get()) {
 		}
 		System.out.print("Connected!");
@@ -86,7 +86,7 @@ public class Chord {
 		m = new SSLMessage(this.successor);
 		m.write(ChordOps.GET_DATA + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 		m.read();
-		m.close();
+		m.close();*/
 
 		System.out.println("Node joined ring");
 		
@@ -158,7 +158,7 @@ public class Chord {
     		m.write(ChordOps.SET_PREDECESSOR + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
     		m.read();
     		m.close();
-    		this.populateFingerTable(new_peer);
+    		//this.populateFingerTable(new_peer);
 			return;
 		}
 		//se a chave que se procura estiver entre mim e o meu successor, logo deu hit!

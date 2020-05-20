@@ -132,7 +132,7 @@ public class ChordMessageHandler implements Runnable {
 	private ChordMessage readSocket() {
 		int len;
 		byte[] buf;
-
+		System.out.println("reading");
 		try {
 			DataInputStream dis = new DataInputStream(socket.getInputStream());
 			len = dis.readInt();
@@ -143,16 +143,18 @@ public class ChordMessageHandler implements Runnable {
 			e.printStackTrace();
 			return null;
 		}
-
+		System.out.println("done reading");
 		return new ChordMessage(buf);
 	}
 
 	private void writeToSocket(byte[] message) {
+		System.out.println("to send: " + new String(message));
 		try {
 			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
 			dos.writeInt(message.length);
 			dos.write(message, 0, message.length);
+			dos.flush();
 
 		} catch (IOException e) {
 			System.err.println("Error sending message.");

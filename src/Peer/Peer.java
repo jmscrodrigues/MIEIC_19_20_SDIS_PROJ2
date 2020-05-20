@@ -1,6 +1,7 @@
 package Peer;
 
 import Chord.Chord;
+import Chord.SSLMessage;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,8 +57,9 @@ public class Peer {
 
 		this.scheduler_executor.execute(new PeerServer(this));
 
-		if (access_peer != null)
+		if (access_peer != null) {
 			this.chord.joinRing(access_peer);
+		}
 
 		Runtime.getRuntime().addShutdownHook(new Thread(chord::leaveRing));
 	}
