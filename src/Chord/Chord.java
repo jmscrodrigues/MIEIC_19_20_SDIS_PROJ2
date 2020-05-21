@@ -45,6 +45,7 @@ public class Chord {
     private Memory memory;
     
     int nextFinger = 0;
+    int nextSucessor = 0;
 	
 	public Chord(Peer p , int port) {
 		this.selfAddress = new InetSocketAddress("localhost" , port);
@@ -590,6 +591,18 @@ public class Chord {
 		int index = this.positiveModule((int) (this.getKey() + Math.pow(2, this.nextFinger)), (int)  Math.pow(2, M));
 		this.fingerTable.put(this.nextFinger, this.lookup(index));
 		this.nextFinger++;
+	}
+	
+	public void fix_sucessor() {
+		if(this.nextSucessor == R)
+			this.nextSucessor = 0;
+		int index;
+		if(this.nextSucessor == 0)
+			index = this.positiveModule((int) (this.getKey() + 1), (int)  Math.pow(2, M));
+		else
+			index = this.positiveModule((int) (this.hash(this.sucessorList.get(this.nextSucessor - 1)) + 1), (int)  Math.pow(2, M));
+		this.sucessorList.put(this.nextSucessor, this.lookup(index));
+		this.nextSucessor++;
 	}
 	
 	/*public void setSuccessor(InetSocketAddress suc) {
