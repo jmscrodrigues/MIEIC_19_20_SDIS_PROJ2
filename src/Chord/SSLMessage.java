@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.security.KeyStore;
@@ -28,13 +29,17 @@ public class SSLMessage {
     	this(address.getHostName(), address.getPort());
     }
     
-    public SSLMessage(String ip, int port) {
+    public SSLMessage(String ip, int port)  {
     	this.ip = ip;
     	this.port = port;
 
         try {
             this.sslSocket = this.createSocket();
-        } catch (Exception e) {
+        }catch(ConnectException e) {
+        	System.err.print("Failed to connect ssl socket\n");
+        	//throw e;
+        }
+        catch (Exception e) {
             System.err.print("Failed to create ssl socket\n");
             e.printStackTrace();
             return;
@@ -45,7 +50,7 @@ public class SSLMessage {
         try {
             this.connect();
         } catch (Exception e) {
-            System.err.print("Failed to connect to socket\n");
+            System.err.print("Failed to handshake to socket\n");
             e.printStackTrace();
         }
 
@@ -119,22 +124,6 @@ public class SSLMessage {
     }
 
     private SSLSocket createSocket() throws Exception {
-        /*SSLContext context;
-        KeyManagerFactory keyManagerFactory;
-        KeyStore ks;
-        char[] passphrase = "passphrase".toCharArray();
-
-        context = SSLContext.getInstance("TLS");
-        keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-        ks = KeyStore.getInstance("JKS");
-
-        ks.load(new FileInputStream("testkeys.jks"), passphrase);
-
-        keyManagerFactory.init(ks, passphrase);
-
-        context.init(keyManagerFactory.getKeyManagers(), null, null);
-
-        SSLSocketFactory sslSocketFactory = context.getSocketFactory();*/
     	
     	SSLContext context;
     	context = SSLContext.getInstance("SSL");
