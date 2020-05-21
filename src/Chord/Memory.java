@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -11,10 +12,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import Peer.FileData;
 
-public class Memory {
+public class Memory implements Serializable{
     
 	//private final ConcurrentHashMap<Integer, byte[]> data = new ConcurrentHashMap<>();
 	
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+
 	/*
 	 * Files backedup by this peer
 	 */
@@ -174,5 +180,8 @@ public class Memory {
     	str += "\n\nMax memory: " + this.maxMemory + "\t Memory in use: " + this.memoryInUse;
     	return str;
     }
-    
+	
+	public String getPath() {
+		return this.path;
+	}
 }

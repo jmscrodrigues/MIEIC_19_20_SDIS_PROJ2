@@ -2,6 +2,12 @@ package Chord;
 
 import Peer.Peer;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
@@ -11,125 +17,158 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 public class Chord {
-	
+
 	static final int M = 15;
 	static final int UPDATE_TIME = 10;
-	
+
 	private final Peer peer;
-	
+
 	private final InetSocketAddress selfAddress;
 	private InetSocketAddress successor;
 	private InetSocketAddress predecessor;
 	private InetSocketAddress access_peer;
 
 	private ChordServer chordServer;
-	
-	private final ConcurrentHashMap<Integer,InetSocketAddress> fingerTable = new ConcurrentHashMap<>();
+
+	private final ConcurrentHashMap<Integer, InetSocketAddress> fingerTable = new ConcurrentHashMap<>();
 
 	int port;
 	private int key;
-	
+
 	private AtomicBoolean connected = new AtomicBoolean(false);
 	private AtomicBoolean updating_fingers = new AtomicBoolean(false);
-	
-    private final Memory memory;
-    
-    int nextFinger = 0;
-	
-	public Chord(Peer p , int port) {
-		this.selfAddress = new InetSocketAddress("localhost" , port);
+
+	private Memory memory;
+
+	int nextFinger = 0;
+
+	public Chord(Peer p, int port) {
+		this.selfAddress = new InetSocketAddress("localhost", port);
 		this.setKey(this.hash(selfAddress));
-		this.memory = new Memory("./peer" + key);
+		try {
+			ObjectInputStream ois = new ObjectInputStream(new FileInputStream("./peer" + key + "/" + key + ".ser"));
+
+			memory = (Memory) ois.readObject();
+
+			ois.close();
+			System.out.println("Read memory from file");
+
+		} catch (FileNotFoundException e) {
+			memory = new Memory("./peer" + key);
+			System.out.println("File not read from memory");
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
+		} catch (ClassNotFoundException cnfe) {
+			cnfe.printStackTrace();
+		}
 		this.peer = p;
-        this.port = port;
+		this.port = port;
 
-        this.chordServer = new ChordServer(this, port);
-        try {
-        	this.peer.getExecutor().execute(this.chordServer);
-        } catch (Exception e) {
-            System.err.println("Could not create the server");
-            e.printStackTrace();
-        }
+		this.chordServer = new ChordServer(this, port);
+		try {
+			this.peer.getExecutor().execute(this.chordServer);
+		} catch (Exception e) {
+			System.err.println("Could not create the server");
+			e.printStackTrace();
+		}
 
-        this.successor = null;
-        this.predecessor = null;
-        
-        //this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
-        
-        System.out.println("Chord initiated with key " + this.getKey());
-    }
-	
+		this.successor = null;
+		this.predecessor = null;
+
+		// this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME,
+		// TimeUnit.SECONDS);
+
+		System.out.println("Chord initiated with key " + this.getKey());
+	}
+
 	public void joinRing(InetSocketAddress peer) {
 
 		this.access_peer = peer;
-		
+
 		System.out.println("Started join process");
-		
-		String data = ChordOps.GET_SUCCESSOR + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort();
+
+		String data = ChordOps.GET_SUCCESSOR + " " + this.getKey() + " " + this.selfAddress.getHostName() + " "
+				+ this.selfAddress.getPort();
 		SSLMessage m = new SSLMessage(this.access_peer);
 		m.write(data);
 		m.read();
 		m.close();
 
 		System.out.print("Awaiting connection...");
-		while(!this.connected.get()) {
+		while (!this.connected.get()) {
 		}
 		System.out.print("Connected!");
-		
+
 		this.updateFingerTable();
-		
+
 		System.out.println("Asking data to successor initiated");
-		
+
 		m = new SSLMessage(this.successor);
-		m.write(ChordOps.GET_DATA + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
+		m.write(ChordOps.GET_DATA + " " + this.getKey() + " " + this.selfAddress.getHostName() + " "
+				+ this.selfAddress.getPort());
 		m.read();
 		m.close();
 
 		System.out.println("Node joined ring");
-		
+
 	}
-	
+
 	public void leaveRing() {
 		System.out.println("Started leaving process");
-		
-		if(this.successor != null && this.predecessor != null) {
-			
+
+		if (this.successor != null && this.predecessor != null) {
+
 			SSLMessage m = new SSLMessage(this.successor);
-			m.write(ChordOps.SET_PREDECESSOR + " " + this.hash(predecessor) + " " + this.predecessor.getHostName() + " " +  this.predecessor.getPort());
+			m.write(ChordOps.SET_PREDECESSOR + " " + this.hash(predecessor) + " " + this.predecessor.getHostName() + " "
+					+ this.predecessor.getPort());
 			m.read();
 			m.close();
-			
+
 			m = new SSLMessage(this.predecessor);
-			m.write(ChordOps.SET_SUCCESSOR + " " + this.hash(successor) + " " + this.successor.getHostName() + " " +  this.successor.getPort());
+			m.write(ChordOps.SET_SUCCESSOR + " " + this.hash(successor) + " " + this.successor.getHostName() + " "
+					+ this.successor.getPort());
 			m.read();
 			m.close();
-			
+
 			m = new SSLMessage(this.predecessor);
-			m.write(ChordOps.DELETE_FINGER + " " + this.hash(predecessor) + " " + this.getKey() + " " + this.successor.getHostName() + " " +  this.successor.getPort() );
+			m.write(ChordOps.DELETE_FINGER + " " + this.hash(predecessor) + " " + this.getKey() + " "
+					+ this.successor.getHostName() + " " + this.successor.getPort());
 			m.read();
 			m.close();
 
 			System.out.println("Sent new delete to predecessor");
-			
+
 			System.out.println("Transferring data to successor initiated");
-			
-			List<Pair<Integer,Integer>> list = this.memory.getStoredChunks();
-			for(int i = 0; i < list.size();i++) {
+
+			List<Pair<Integer, Integer>> list = this.memory.getStoredChunks();
+			for (int i = 0; i < list.size(); i++) {
 				int chunkId = list.get(i).getKey();
 				byte[] data = this.memory.get(chunkId);
-				if(data != null)
+				if (data != null)
 					this.putInSuccessor(chunkId, this.memory.get(chunkId), 1);
 				this.removeInMemory(chunkId);
 				i--;
 			}
-			
-			System.out.println("Transferring data to successor done");	
-			
-			
+
+			System.out.println("Transferring data to successor done");
+
 		}
 
+		FileOutputStream fileOut;
+		ObjectOutputStream out;
+		try {
+			fileOut = new FileOutputStream(memory.getPath() + key +  ".ser");
+			out = new ObjectOutputStream(fileOut);
+			out.writeObject(memory);
+			out.close();
+			fileOut.close();
+			System.out.println("Serialized data has been saved in " + memory.getPath() + key + ".ser");
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	
 		this.chordServer.stop();
 		System.out.println("Node left ring");
 	}
