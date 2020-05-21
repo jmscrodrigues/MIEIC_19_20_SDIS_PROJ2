@@ -45,6 +45,7 @@ public class Chord {
     private Memory memory;
     
     int nextFinger = 0;
+    int nextSucessor = 0;
 	
 	public Chord(Peer p , int port) {
 		this.selfAddress = new InetSocketAddress("localhost" , port);
@@ -557,8 +558,8 @@ public class Chord {
 			if(i == R-1) {
 				index = this.positiveModule(this.hash(this.sucessorList.get(i-1)) + 1,(int)  Math.pow(2, M));
 				InetSocketAddress suc = this.lookup(index);
-				if(suc.toString().equals(this.selfAddress.toString()))
-					suc = null;
+				/*if(suc.toString().equals(this.selfAddress.toString()))
+					suc = null;*/
 				this.sucessorList.put(i, suc);
 			}else {
 				this.sucessorList.put(i, this.sucessorList.get(i+1));
@@ -590,6 +591,18 @@ public class Chord {
 		int index = this.positiveModule((int) (this.getKey() + Math.pow(2, this.nextFinger)), (int)  Math.pow(2, M));
 		this.fingerTable.put(this.nextFinger, this.lookup(index));
 		this.nextFinger++;
+	}
+	
+	public void fix_sucessor() {
+		if(this.nextSucessor == R)
+			this.nextSucessor = 0;
+		int index;
+		if(this.nextSucessor == 0)
+			index = this.positiveModule((int) (this.getKey() + 1), (int)  Math.pow(2, M));
+		else
+			index = this.positiveModule((int) (this.hash(this.sucessorList.get(this.nextSucessor - 1)) + 1), (int)  Math.pow(2, M));
+		this.sucessorList.put(this.nextSucessor, this.lookup(index));
+		this.nextSucessor++;
 	}
 	
 	/*public void setSuccessor(InetSocketAddress suc) {
