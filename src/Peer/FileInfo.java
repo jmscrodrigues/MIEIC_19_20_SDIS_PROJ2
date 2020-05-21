@@ -84,8 +84,8 @@ public class FileInfo {
     	return this.file.exists();
     }
 	
-    public int getNumberOfParts() {
-        return this.fileParts.size();
+    public Integer getNumberOfParts() {
+        return new Integer(this.fileParts.size());
     }
 	
     public byte[] getFilePart(int i) {

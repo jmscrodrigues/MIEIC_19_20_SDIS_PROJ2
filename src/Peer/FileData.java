@@ -3,6 +3,7 @@ package Peer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FileData implements Serializable {
 	
@@ -14,7 +15,7 @@ public class FileData implements Serializable {
 	
 	private int numberOfChunks;
 	
-	private List<Integer> chunksIds = new ArrayList<Integer>();
+	private ConcurrentHashMap<Integer,Integer> chunksIds = new ConcurrentHashMap<Integer,Integer>();
 	
 	FileData(String fp, int nChunks,int rep){
 		filepath = fp;
@@ -30,14 +31,11 @@ public class FileData implements Serializable {
 	}
 	
 	public void addId(int key) {
-		this.chunksIds.add(key);
+		this.chunksIds.put(key,1);
 	}
 	
 	public boolean isChunkFromHere(int key) {
-		for(Integer k : this.chunksIds)
-			if(k == key)
-				return true;
-		return false;			
+		return this.chunksIds.get(key) != null;	
 	}
 	
 	

@@ -4,17 +4,24 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import Peer.FileData;
 
-public class Memory {
+public class Memory implements Serializable{
     
 	//private final ConcurrentHashMap<Integer, byte[]> data = new ConcurrentHashMap<>();
 	
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+
 	/*
 	 * Files backedup by this peer
 	 */
@@ -23,12 +30,13 @@ public class Memory {
 	/*
 	 * chunks stored by this peer
 	 */
-	private final List<Pair<Integer,Integer>> chunksStored = new ArrayList<Pair<Integer,Integer>>();
+	//private final List<Pair<Integer,Integer>> chunksStored = new ArrayList<Pair<Integer,Integer>>();
+	private final ConcurrentHashMap<Integer,Integer> chunksStored = new ConcurrentHashMap<>();
 	
 	/*
 	 * Chunks not able to store here and sent to sucessor 
 	 */
-	private final List<Integer> chunksRedirected = new ArrayList<Integer>();
+	private final ConcurrentHashMap<Integer,Integer> chunksRedirected = new ConcurrentHashMap<>();
 
 	//private final List<Pair<Integer,Integer>> chunkSize = new ArrayList<Pair<Integer,Integer>>();
 	
@@ -66,7 +74,8 @@ public class Memory {
             return false;
         }
     	memoryInUse += data.length;
-		this.chunksStored.add(new Pair<>(chunkId,data.length));
+		//this.chunksStored.add(new Pair<>(chunkId,data.length));
+    	this.chunksStored.put(chunkId,data.length);
 		//Pair<Integer,Integer> cSize = new Pair<Integer, Integer>(chunkId, data.length);
 		//this.chunkSize.add(cSize);
 		return true;
@@ -87,12 +96,13 @@ public class Memory {
     	}
     	System.out.println("Deleting file : " + this.path + String.valueOf(chunkId));
     	file.delete();
-    	for(int i = 0; i < this.chunksStored.size();i++) {
+    	/*for(int i = 0; i < this.chunksStored.size();i++) {
     		if(this.chunksStored.get(i).getKey() == chunkId) {
     			this.chunksStored.remove(i);
     			break;
     		}
-		}
+		}*/
+    	this.chunksStored.remove(chunkId);
 
     	memoryInUse-=d.length;
     	return d;
@@ -102,21 +112,23 @@ public class Memory {
     	return this.memoryInUse + d <= this.maxMemory;
     }
     
-    public void addRedirectedChunk(int key) {
-    	this.chunksRedirected.add(key);
+    public void addRedirectedChunk(int key, int replication) {
+    	this.chunksRedirected.put(key, replication);
     }
     public boolean chunkRedirected(int key) {
-    	for(int i = 0; i < this.chunksRedirected.size();i++)
+    	/*for(int i = 0; i < this.chunksRedirected.size();i++)
     		if(this.chunksRedirected.get(i) == key)
     			return true;
-    	return false;
+    	return false;*/
+    	return this.chunksRedirected.get(key) != null;
     }
     public void removeRedirectedChunk(int key) {
-    	for(int i = 0; i < this.chunksRedirected.size();i++)
+    	/*for(int i = 0; i < this.chunksRedirected.size();i++)
     		if(this.chunksRedirected.get(i) == key) {
     			this.chunksRedirected.remove(i);
     			return;
-    		}
+    		}*/
+    	this.chunksRedirected.remove(key);
     }
     
     
@@ -131,9 +143,12 @@ public class Memory {
     	return this.backupFiles.get(file_id);
     }
     
-    public List<Pair<Integer,Integer>> getStoredChunks(){
+    /*public List<Pair<Integer,Integer>> getStoredChunks(){
     	return this.chunksStored;
-	}
+	}*/
+    public Set<Entry<Integer,Integer>> getStoredChunks(){
+    	return this.chunksStored.entrySet();
+    }
 	
 	public int getMemoryInUse() {
 		return this.memoryInUse;
@@ -144,12 +159,13 @@ public class Memory {
 	} */
 	
 	public boolean isStoredHere(int key) {
-		for(int i = 0; i < this.chunksStored.size();i++) {
+		/*for(int i = 0; i < this.chunksStored.size();i++) {
     		Pair<Integer,Integer> p = this.chunksStored.get(i);
     		if(p.getKey() == key)
     			return true;
     	}
-		return false;
+		return false;*/
+		return this.chunksStored.get(key) != null;
 	}
 	
 	public boolean wasInitiatedHere(int key) {
@@ -163,16 +179,18 @@ public class Memory {
     
     public String status() {
     	String str = "Chunks Stored:\nKey \t Length\n";
-    	for(int i = 0; i < this.chunksStored.size();i++) {
-    		Pair<Integer,Integer> p = this.chunksStored.get(i);
-    		str += p.getKey() + " -> " + p.getValue()  + "\n";
+    	for (ConcurrentHashMap.Entry<Integer, Integer> entry : this.chunksStored.entrySet()) {
+    		str += entry.getKey() + " -> " + entry.getValue()  + "\n";
     	}
     	str+="\n\nChunksRedirected:\nKey";
-    	for(int i = 0; i < this.chunksRedirected.size();i++) {
-    		str+=this.chunksRedirected.get(i)+"\n";
+    	for (ConcurrentHashMap.Entry<Integer, Integer> entry : this.chunksRedirected.entrySet()) {
+    		str+=entry.getKey()+"\n";
     	}
     	str += "\n\nMax memory: " + this.maxMemory + "\t Memory in use: " + this.memoryInUse;
     	return str;
     }
-    
+	
+	public String getPath() {
+		return this.path;
+	}
 }
