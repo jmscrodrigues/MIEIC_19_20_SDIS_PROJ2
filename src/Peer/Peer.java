@@ -116,7 +116,7 @@ public class Peer {
 		while(!file.isFileRestored()) {
 		}
 		if(file.isCorrupted())
-			return "Restor failed";
+			return "Restore failed";
 		
         file.exportFile(file_name, "./peer" + this.chord.getKey() + "/");
         return "Restored with success";

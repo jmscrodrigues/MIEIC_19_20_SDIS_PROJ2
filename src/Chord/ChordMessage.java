@@ -31,7 +31,6 @@ public class ChordMessage {
         String[] parts = message.split(" ");
 
         this.op = parts[0];
-        System.out.print(op);
         if (op.equals(ChordOps.DELETE_FINGER)) {
             this.key = Integer.parseInt(parts[1]);
             this.oldKey = Integer.parseInt(parts[2]);
@@ -44,8 +43,9 @@ public class ChordMessage {
             this.replication = Integer.parseInt(parts[2]);
             System.out.println(" " + this.key + " " + this.replication);
             return;
-        }
-        
+        }else if(op.equals("FAIL") || op.equals("VALID"))
+        	return;
+
         if (parts.length > 1) {
             this.key = Integer.parseInt(parts[1].replaceAll("\\D", ""));
             System.out.print(" "+this.key);
@@ -54,7 +54,7 @@ public class ChordMessage {
             this.ip = parts[2];
             System.out.print(" "+this.ip);
         }
-        
+
         if (parts.length > 3) {
             this.port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
             System.out.print(" "+this.port);

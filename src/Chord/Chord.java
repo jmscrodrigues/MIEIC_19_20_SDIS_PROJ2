@@ -15,6 +15,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -79,7 +80,7 @@ public class Chord {
         //this.successor = null;
         //this.predecessor = null;
         
-        //this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
+        this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
         
         System.out.println("Chord initiated with key " + this.getKey());
     }
@@ -287,7 +288,7 @@ public class Chord {
 				m.close();
 			} catch (ConnectException e) {
 				System.out.println("Could not connect to closest");
-				e.printStackTrace();
+				//e.printStackTrace();
 				return null;
 			}
     		String [] parts = new String(data).split(" ");
@@ -307,7 +308,7 @@ public class Chord {
 			m.close();
 		} catch (ConnectException e) {
 			System.out.println("Could not connect to destiny");
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return key;
 	}
@@ -324,10 +325,13 @@ public class Chord {
 			m.close();
 		} catch (ConnectException e) {
 			System.out.println("Could not connect to destiny");
-			e.printStackTrace();
+			//e.printStackTrace();
 			return null;
 		}
-		return data;
+		ChordMessage message = new ChordMessage(data);
+		if(message.op.equals("FAIL"))
+			return null;
+		return message.body;
 	}
 	
 	public void remove(String identifier , int replication) {
@@ -342,7 +346,7 @@ public class Chord {
 			m.close();
 		} catch (ConnectException e) {
 			System.out.println("Could not connect to destiny");
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		//return data;
 	}
@@ -414,7 +418,7 @@ public class Chord {
 						m.close();
 					} catch (ConnectException e) {
 						System.out.println("Could not send data to predecessor");
-						e.printStackTrace();
+						//e.printStackTrace();
 					}
 				}
 				this.removeInMemory(chunkId);
@@ -495,7 +499,7 @@ public class Chord {
 			m.close();
 		} catch (ConnectException e) {
 			System.out.println("Could not connect to predecessor");
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		System.out.println("Sent new finger to predecessor");
 	}
@@ -518,7 +522,7 @@ public class Chord {
 			m.close();
 		} catch (ConnectException e) {
 			System.out.println("Could not connect to predecessor");
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		System.out.println("Sent new delete to predecessor");
 	}
@@ -724,7 +728,7 @@ public class Chord {
             }
 
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         return (int) (r % Math.pow(2, bits));

@@ -8,6 +8,9 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 
 public class ChordMessageHandler implements Runnable {
+	
+	static final String CRLF = "\r\n" ;
+	
 	Chord chord;
 	SSLSocket socket;
 
@@ -91,9 +94,22 @@ public class ChordMessageHandler implements Runnable {
 			case ChordOps.GET: {
 				if(this.chord.getMemory().isStoredHere(message.key)) {
 					toSend = this.chord.getInMemory(message.key);
-					if(toSend == null)
-						if (message.replication > 1)
+					if(toSend == null) {
+						if (this.chord.getMemory().chunkRedirected(message.key) && message.replication > 1)
 							toSend = this.chord.getFromSuccessor(message.key,message.replication - 1);
+					}else {
+						String header = "VALID" + " " + CRLF + CRLF;
+						byte[] headerB = header.getBytes();
+				        byte [] temp = new byte[headerB.length + toSend.length];
+
+				        System.arraycopy(headerB, 0, temp, 0, headerB.length);
+				        System.arraycopy(toSend, 0, temp, headerB.length, toSend.length);
+				        toSend = temp;
+					}
+					
+					if(toSend == null) {
+						toSend = new String("FAIL" + " " + CRLF + CRLF).getBytes();
+					}
 						
 				}else {
 					if (this.chord.getMemory().chunkRedirected(message.key))
