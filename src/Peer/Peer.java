@@ -39,7 +39,7 @@ public class Peer {
 
 	Peer(int server_port, int chord_port, InetSocketAddress access_peer) {
 		
-		this.scheduler_executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(64);
+		this.scheduler_executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(512);
 		this.chord = new Chord(this, chord_port);
 		
 		File directory = new File("./peer" + this.chord.getKey());
@@ -75,8 +75,9 @@ public class Peer {
 	}
 
 	public String remove(String key) {
-		byte[] ret = this.chord.remove(key,1);
-		return new String(ret, StandardCharsets.UTF_8);
+		this.chord.remove(key,1);
+		//return new String(ret, StandardCharsets.UTF_8);
+		return "removed";
 	}
 	
 	public String backup(String file_name, int replication) {
@@ -88,7 +89,11 @@ public class Peer {
         //TODO generate unique id through hash
         this.chord.getMemory().addBackupFile(file_name, file.getFileData());
         for (int i = 0; i < file.getNumberOfParts(); i++) {
-			this.getExecutor().execute(new PeerBackupThread(this.chord, file, file_name, i, replication));
+			//this.getExecutor().execute(new PeerBackupThread(this.chord, file, file_name, i, replication));
+        	int key = this.chord.hash(file_name + "_" + i);
+			file.addId(key);
+			this.chord.put(file_name + "_" + i, file.getFilePart(i), replication);
+			System.out.println(file_name + ":" + (i + 1) + "/" + file.getNumberOfParts());
         }
 		
         return "Backup with success";
@@ -102,7 +107,10 @@ public class Peer {
 		int numChunks = fileData.getNumChunks();
 		FileInfo file = new FileInfo(file_name, numChunks);
 		for(int i = 0; i < numChunks ; i++) {
-			this.getExecutor().execute(new PeerRestoreThread(this.chord, file, fileData, file_name, i));
+			//this.getExecutor().execute(new PeerRestoreThread(this.chord, file, fileData, file_name, i));
+			byte[] ret = this.chord.get(file_name + "_" + i , fileData.getReplicationDegree());
+			file.putFilePart(i, ret);
+			System.out.println(file_name + ":" + (i + 1) + "/" + file.getNumberOfParts());
 		}
 		
 		while(!file.isFileRestored()) {
@@ -120,7 +128,10 @@ public class Peer {
 			return "File not known";
 		int numChunks = fileData.getNumChunks();
 		for(int i = 0; i < numChunks ; i++) {
-			this.getExecutor().execute(new PeerDeleteThread(this.chord, fileData, file_name, i));
+			//this.getExecutor().execute(new PeerDeleteThread(this.chord, fileData, file_name, i));
+			System.out.println("sending delete of chunk: " + i);
+			this.chord.remove(file_name + "_" + i, fileData.getReplicationDegree());
+			
 		}
         this.chord.getMemory().removeBackupFile(file_name);
         return "Deleted with success";

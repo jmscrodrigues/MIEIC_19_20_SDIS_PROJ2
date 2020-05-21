@@ -85,6 +85,7 @@ public class ChordMessageHandler implements Runnable {
 						System.out.println("Chunk backedup from here, redirecting");
 					this.chord.putInSuccessor(message.key, message.body, message.replication);
 				}
+				toSend = null;
 				break;
 			}
 			case ChordOps.GET: {
@@ -117,14 +118,14 @@ public class ChordMessageHandler implements Runnable {
 					System.out.println("Chunk redirected, removing here if exists and from sucessor");
 					toSend = this.chord.removeInMemory(message.key);
 					if(toSend == null)
-						toSend = this.chord.removeFromSuccessor(message.key,message.replication);
+						this.chord.removeFromSuccessor(message.key,message.replication);
 					else if (message.replication > 1)
-						toSend = this.chord.removeFromSuccessor(message.key,message.replication - 1);
+						this.chord.removeFromSuccessor(message.key,message.replication - 1);
 				}
 
-				if (toSend == null)
-					toSend = "ERROR".getBytes();
-
+				/*if (toSend == null)
+					toSend = "ERROR".getBytes();*/
+				toSend = null;
 				break;
 			}
 			case ChordOps.GET_DATA: {
@@ -136,8 +137,9 @@ public class ChordMessageHandler implements Runnable {
 				break;
 			}
 		}
-
-		this.writeToSocket(toSend);
+		
+		if(toSend != null)
+			this.writeToSocket(toSend);
 
 		try {
 			socket.close();

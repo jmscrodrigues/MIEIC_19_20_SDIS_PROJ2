@@ -25,11 +25,11 @@ public class SSLMessage {
     
     private boolean debug = false;
     
-    public SSLMessage(InetSocketAddress address) {
+    public SSLMessage(InetSocketAddress address) throws ConnectException {
     	this(address.getHostName(), address.getPort());
     }
     
-    public SSLMessage(String ip, int port)  {
+    public SSLMessage(String ip, int port) throws ConnectException  {
     	this.ip = ip;
     	this.port = port;
 
@@ -37,7 +37,7 @@ public class SSLMessage {
             this.sslSocket = this.createSocket();
         }catch(ConnectException e) {
         	System.err.print("Failed to connect ssl socket\n");
-        	//throw e;
+        	throw e;
         }
         catch (Exception e) {
             System.err.print("Failed to create ssl socket\n");
