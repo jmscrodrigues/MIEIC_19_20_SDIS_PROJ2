@@ -88,13 +88,9 @@ public class Peer {
         //TODO generate unique id through hash
         this.chord.getMemory().addBackupFile(file_name, file.getFileData());
         for (int i = 0; i < file.getNumberOfParts(); i++) {
-        	int key = this.chord.hash(file_name + "_" + i);
-        	file.addId(key);
-        	this.chord.put(file_name + "_" + i, file.getFilePart(i), replication);
-        	System.out.println(file_name + ":" + (i + 1) + "/" + file.getNumberOfParts());
+			this.getExecutor().execute(new PeerBackupThread(this.chord, file, file_name, i, replication));
         }
-  
-        
+		
         return "Backup with success";
 	}
 	
@@ -106,9 +102,7 @@ public class Peer {
 		int numChunks = fileData.getNumChunks();
 		FileInfo file = new FileInfo(file_name, numChunks);
 		for(int i = 0; i < numChunks ; i++) {
-			byte[] ret = this.chord.get(file_name + "_" + i , fileData.getReplicationDegree());
-			file.putFilePart(i, ret);
-			System.out.println(file_name + ":" + (i + 1) + "/" + file.getNumberOfParts());
+			this.getExecutor().execute(new PeerRestoreThread(this.chord, file, fileData, file_name, i));
 		}
 		
 		while(!file.isFileRestored()) {
@@ -126,8 +120,7 @@ public class Peer {
 			return "File not known";
 		int numChunks = fileData.getNumChunks();
 		for(int i = 0; i < numChunks ; i++) {
-			System.out.println("sending delete of chunk: " + i);
-			this.chord.remove(file_name + "_" + i, fileData.getReplicationDegree());
+			this.getExecutor().execute(new PeerDeleteThread(this.chord, fileData, file_name, i));
 		}
         this.chord.getMemory().removeBackupFile(file_name);
         return "Deleted with success";
@@ -160,6 +153,79 @@ public class Peer {
 	public ScheduledThreadPoolExecutor getExecutor() {
 		return this.scheduler_executor;
 	}
+
+	public class PeerBackupThread implements Runnable {
+		private Chord chord;
+		private FileInfo file;
+		private String file_name;
+		private int index;
+		private int replication;
+
+		public PeerBackupThread (Chord chord, FileInfo file, String file_name, int index, int replication) {
+			this.chord = chord;
+			this.file = file;
+			this.file_name = file_name;
+			this.index = index;
+			this.replication = replication;
+		}
+
+		@Override
+		public void run() {
+			int key = this.chord.hash(this.file_name + "_" + this.index);
+			this.file.addId(key);
+			this.chord.put(this.file_name + "_" + this.index, file.getFilePart(this.index), this.replication);
+			System.out.println(this.file_name + ":" + (this.index + 1) + "/" + file.getNumberOfParts());
+		}
+		
+	}
+
+	public class PeerRestoreThread implements Runnable {
+		private Chord chord;
+		private FileInfo file;
+		private String file_name;
+		private int index;
+		private FileData fileData; 
+
+		public PeerRestoreThread (Chord chord, FileInfo file, FileData fileData, String file_name, int index) {
+			this.chord = chord;
+			this.file = file;
+			this.file_name = file_name;
+			this.index = index;
+			this.fileData = fileData;
+		}
+
+		@Override
+		public void run() {
+			byte[] ret = this.chord.get(this.file_name + "_" + this.index , this.fileData.getReplicationDegree());
+			this.file.putFilePart(this.index, ret);
+			System.out.println(this.file_name + ":" + (this.index + 1) + "/" + this.file.getNumberOfParts());
+		}
+		
+	}
+
+	public class PeerDeleteThread implements Runnable {
+		private Chord chord;
+		private String file_name;
+		private int index;
+		private FileData fileData; 
+
+		public PeerDeleteThread (Chord chord, FileData fileData, String file_name, int index) {
+			this.chord = chord;
+			this.file_name = file_name;
+			this.index = index;
+			this.fileData = fileData;
+		}
+
+		@Override
+		public void run() {
+			System.out.println("sending delete of chunk: " + this.index);
+			this.chord.remove(this.file_name + "_" + this.index, this.fileData.getReplicationDegree());
+		}
+		
+	}
 	
 
 }
+
+
+
