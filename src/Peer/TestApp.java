@@ -89,7 +89,8 @@ public class TestApp {
 				toSend = op + " " + file + " " + replication;
 				break;
 			}
-			case PeerOps.RESTORE: {
+			case PeerOps.RESTORE:
+			case PeerOps.DELETE: {
 				if (args.length != 3) {
 					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename>");
 					System.exit(-1);
@@ -104,15 +105,6 @@ public class TestApp {
 					System.exit(-1);
 				}
 				toSend = op;
-				break;
-			}
-			case PeerOps.DELETE: {
-				if (args.length != 3) {
-					System.err.println("Usage: TestApp <peer_ip>:<peer_port> " + op + " <filename>");
-					System.exit(-1);
-				}
-				String file = args[2];
-				toSend = op + " " + file;
 				break;
 			}
 			case PeerOps.RECLAIM: {

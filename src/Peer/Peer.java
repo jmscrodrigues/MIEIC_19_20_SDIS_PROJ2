@@ -1,7 +1,6 @@
 package Peer;
 
 import Chord.Chord;
-import Chord.SSLMessage;
 
 import java.io.File;
 import java.io.IOException;

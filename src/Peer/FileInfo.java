@@ -1,11 +1,6 @@
 package Peer;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,7 +80,7 @@ public class FileInfo {
     }
 	
     public Integer getNumberOfParts() {
-        return new Integer(this.fileParts.size());
+        return this.fileParts.size();
     }
 	
     public byte[] getFilePart(int i) {

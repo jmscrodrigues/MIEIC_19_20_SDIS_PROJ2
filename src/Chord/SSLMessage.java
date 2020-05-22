@@ -1,18 +1,10 @@
 package Chord;
 
 import javax.net.ssl.*;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.security.KeyStore;
-import java.util.Arrays;
 
 public class SSLMessage {
 	

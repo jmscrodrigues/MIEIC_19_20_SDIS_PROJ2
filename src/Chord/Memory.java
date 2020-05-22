@@ -1,17 +1,11 @@
 package Chord;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import Peer.FileData;
+
+import java.io.*;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import Peer.FileData;
 
 public class Memory implements Serializable{
     

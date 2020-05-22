@@ -1,8 +1,6 @@
 package Peer;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class FileData implements Serializable {
