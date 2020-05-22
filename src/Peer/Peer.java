@@ -142,13 +142,9 @@ public class Peer {
 		if (space < 0) {
 			return "New memory space must be greater than 0";
 		}
+		
+		this.chord.reclaim(space);
 
-		if(space > this.chord.getMemory().getMemoryInUse()) {
-
-		}
-		else {
-			this.chord.reclaim(space);
-		}
 
 		return "New memory now at " + space;
 	}

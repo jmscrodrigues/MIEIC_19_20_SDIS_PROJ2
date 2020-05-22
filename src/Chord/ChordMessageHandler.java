@@ -63,8 +63,11 @@ public class ChordMessageHandler implements Runnable {
 				break;
 			}
 			case ChordOps.NEW_FINGER: {
+				System.out.println("here1");
 				this.chord.foundNewFinger(new InetSocketAddress(message.ip, message.port));
+				System.out.println("here2");
 				this.chord.sendNotifyNewFinger(message.key, message.ip, message.port);
+				System.out.println("here3");
 				break;
 			}
 			case ChordOps.DELETE_FINGER: {
@@ -78,7 +81,7 @@ public class ChordMessageHandler implements Runnable {
 						&& !this.chord.getMemory().wasInitiatedHere(message.key)) {
 					this.chord.putInMemory(message.key, message.body);
 					if (message.replication > 1)
-						this.chord.putInSuccessor(message.key, message.body,message.replication - 1);
+						this.chord.putInSuccessor(message.key, message.oldKey, message.body,message.replication - 1);
 				} else {
 					if(this.chord.getMemory().canStoreChunk(message.body.length) == false)
 						System.out.println("No space for chunk, redirecting");
@@ -86,7 +89,7 @@ public class ChordMessageHandler implements Runnable {
 						System.out.println("Chunk already stored, redirecting");
 					if(this.chord.getMemory().wasInitiatedHere(message.key))
 						System.out.println("Chunk backedup from here, redirecting");
-					this.chord.putInSuccessor(message.key, message.body, message.replication);
+					this.chord.putInSuccessor(message.key, message.oldKey, message.body, message.replication);
 				}
 				toSend = null;
 				break;

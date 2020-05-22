@@ -41,7 +41,11 @@ public class ChordMessage {
             return;
         } else if (this.opHasReplication()) {
             this.key = Integer.parseInt(parts[1]);
-            this.replication = Integer.parseInt(parts[2]);
+            if(op.equals("PUT")) {
+            	this.oldKey = Integer.parseInt(parts[2]);
+            	this.replication = Integer.parseInt(parts[3]);
+            }else
+            	this.replication = Integer.parseInt(parts[2]);
             System.out.println(" " + this.key + " " + this.replication);
             return;
         }else if(op.equals("FAIL") || op.equals("VALID"))

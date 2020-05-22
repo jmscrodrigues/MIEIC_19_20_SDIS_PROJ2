@@ -81,7 +81,7 @@ public class Chord {
         //this.successor = null;
         //this.predecessor = null;
         
-        this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
+        //this.getPeer().getExecutor().schedule(new ChordStabilizer(this), UPDATE_TIME, TimeUnit.SECONDS);
         
         System.out.println("Chord initiated with key " + this.getKey());
     }
@@ -115,16 +115,16 @@ public class Chord {
 		
 		System.out.println("Asking data to successor initiated");
 		
-		/*try {
+		try {
 			m = new SSLMessage(this.getSuccessor());
 			m.write(ChordOps.GET_DATA + " " + this.getKey() + " " + this.selfAddress.getHostName() + " " +  this.selfAddress.getPort());
 			m.read();
 			m.close();
-		/*} catch (ConnectException e) {
+		} catch (ConnectException e) {
 			System.out.println("Could not connect to successor peer");
 			e.printStackTrace();
 			System.exit(-1);
-		}*/
+		}
 
 		System.out.println("Node joined ring");
 		
@@ -164,7 +164,7 @@ public class Chord {
 				int chunkId = entry.getKey();
 				byte[] data = this.memory.get(chunkId);
 				if(data != null)
-					this.putInSuccessor(chunkId, this.memory.get(chunkId), 1);
+					this.putInSuccessor(chunkId, this.key, this.memory.get(chunkId), 1);
 				this.removeInMemory(chunkId);
 			}
 			
@@ -253,7 +253,7 @@ public class Chord {
 
     		//novo successor encontrado, por isso mudar os fingers
     		this.foundNewFinger(newFinger);
-    		this.sendNotifyNewFinger(this.getKey(), ip, port);
+    		//this.sendNotifyNewFinger(this.getKey(), ip, port);
     		
 		} else { //se a chave estiver para la do successor
 			InetSocketAddress closest = closest_preceding_node(key);
@@ -304,7 +304,7 @@ public class Chord {
 		SSLMessage m;
 		try {
 			m = new SSLMessage(dest);
-			m.write(ChordOps.PUT + " " + key + " "  + replication, data);
+			m.write(ChordOps.PUT + " " + key + " " + key + " "  + replication, data);
 			//m.read();
 			m.close();
 		} catch (ConnectException e) {
@@ -366,18 +366,21 @@ public class Chord {
 		return this.getMemory().remove(key);
 	}
 	
-	public void putInSuccessor(int key, byte[] body, int replication) {
+	public void putInSuccessor(int key, int originKey, byte[] body, int replication) {
 		if(this.getSuccessor() == null)
 			return;
-		if(this.betweenOpenClose(this.key, this.hash(getSuccessor()), key)) // If it has made a complete turn arrounf the ring
+		System.out.println("Sending to sucessor");
+		if(this.betweenOpenClose(this.key, this.hash(getSuccessor()), originKey)) { // If it has made a complete turn arrounf the ring
+			System.out.println("Could not sent, full turn -> " + this.key + " " + this.hash(getSuccessor()) + "  + originkey");
 			return;
+		}
 		this.memory.addRedirectedChunk(key,replication);
 		/*SSLMessage m = new SSLMessage(this.getSuccessor());
 		m.write(ChordOps.PUT + " " + key + " "  + replication, body);
 		m.read();
 		m.close();*/
 		//this.sendAndReadFromSuccessor(ChordOps.PUT + " " + key + " "  + replication, body);
-		this.sendToSuccessor(ChordOps.PUT + " " + key + " "  + replication, body);
+		this.sendToSuccessor(ChordOps.PUT + " " + key + " " + originKey + " "  + replication, body);
 	}
 	public byte[] getFromSuccessor(int key, int replication) {
 		if(this.getSuccessor() == null)
@@ -414,7 +417,7 @@ public class Chord {
 					SSLMessage m;
 					try {
 						m = new SSLMessage(pre);
-						m.write(ChordOps.PUT + " " + chunkId + " "  + "1", this.memory.get(chunkId));
+						m.write(ChordOps.PUT + " " + chunkId + " " + this.key + " "  + "1", this.memory.get(chunkId));
 						m.read();
 						m.close();
 					} catch (ConnectException e) {
@@ -469,7 +472,9 @@ public class Chord {
 	
 	public void foundNewFinger(InetSocketAddress finger) {
 		int key = this.hash(finger);
+		System.out.println(key);
 		for (int i = 0; i < M; i++) {
+			System.out.println(i);
 			int prev_key = this.hash(this.fingerTable.get(i));
 			if(betweenOpenOpen(this.getKey(), prev_key, key)) {
 				this.fingerTable.replace(i, finger);
@@ -756,6 +761,9 @@ public class Chord {
 	}
 
 	public void reclaim(int space) {
+		this.memory.setMaxMemory(space);
+		if(this.getMemory().getMemoryInUse() <= space)
+			return;
 		int toRemoveKey = 0;
 		int toRemoveSize = 0;
 		for (ConcurrentHashMap.Entry<Integer, Integer> entry : this.getMemory().getStoredChunks())
@@ -766,7 +774,7 @@ public class Chord {
 		byte[] data;
 		data = this.removeInMemory(toRemoveKey);
 
-		this.putInSuccessor(toRemoveKey, data, 1);
+		this.putInSuccessor(toRemoveKey, this.key, data, 1);
 		System.out.println("Got here!!!");
 
 		
@@ -780,7 +788,7 @@ public class Chord {
 					toRemoveKey = entry.getKey();
 				}
 			data = this.removeInMemory(toRemoveKey);
-			this.putInSuccessor(toRemoveKey, data, 1);
+			this.putInSuccessor(toRemoveKey, this.key, data, 1);
 		}
 	} 
 	

@@ -40,7 +40,7 @@ public class Memory implements Serializable{
 
 	//private final List<Pair<Integer,Integer>> chunkSize = new ArrayList<Pair<Integer,Integer>>();
 	
-	private final int maxMemory = 10000000;
+	private int maxMemory = 10000000;
 	private int memoryInUse;
 	
 	String path;
@@ -88,6 +88,7 @@ public class Memory implements Serializable{
         /*if (data.get(fileId) == null)
             return null;
         return data.remove(fileId);*/
+    	this.removeRedirectedChunk(chunkId);
     	File file = new File(this.path + String.valueOf(chunkId));
     	byte[] d = this.get(chunkId);
     	if(file.exists() == false) {
@@ -153,6 +154,10 @@ public class Memory implements Serializable{
 	public int getMemoryInUse() {
 		return this.memoryInUse;
 	}
+	
+	public void setMaxMemory(int space) {
+    	this.maxMemory = space;
+    }
 
 	/*public List<Pair<Integer,Integer>> getChunkSizeList() {
 		return this.chunkSize;
@@ -182,7 +187,7 @@ public class Memory implements Serializable{
     	for (ConcurrentHashMap.Entry<Integer, Integer> entry : this.chunksStored.entrySet()) {
     		str += entry.getKey() + " -> " + entry.getValue()  + "\n";
     	}
-    	str+="\n\nChunksRedirected:\nKey";
+    	str+="\n\nChunksRedirected:\nKey\n";
     	for (ConcurrentHashMap.Entry<Integer, Integer> entry : this.chunksRedirected.entrySet()) {
     		str+=entry.getKey()+"\n";
     	}
