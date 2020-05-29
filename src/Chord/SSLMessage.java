@@ -37,7 +37,6 @@ public class SSLMessage {
             return;
         }
 
-        //System.out.print("Initiating connection...\n");
 
         try {
             this.connect();
@@ -46,12 +45,9 @@ public class SSLMessage {
             e.printStackTrace();
         }
 
-        //System.out.print("Connection established\n");
     }
 
     private void connect() throws Exception {
-        //this.sslSocket.setEnabledProtocols(); TODO
-        //this.sslSocket.setEnabledCipherSuites(); TODO
 
         this.sslSocket.startHandshake();
     }

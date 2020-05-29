@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Memory implements Serializable{
     
-	//private final ConcurrentHashMap<Integer, byte[]> data = new ConcurrentHashMap<>();
 	
 	/**
 	 *
@@ -24,7 +23,6 @@ public class Memory implements Serializable{
 	/*
 	 * chunks stored by this peer
 	 */
-	//private final List<Pair<Integer,Integer>> chunksStored = new ArrayList<Pair<Integer,Integer>>();
 	private final ConcurrentHashMap<Integer,Integer> chunksStored = new ConcurrentHashMap<>();
 	
 	/*
@@ -32,7 +30,6 @@ public class Memory implements Serializable{
 	 */
 	private final ConcurrentHashMap<Integer,Integer> chunksRedirected = new ConcurrentHashMap<>();
 
-	//private final List<Pair<Integer,Integer>> chunkSize = new ArrayList<Pair<Integer,Integer>>();
 	
 	private int maxMemory = 10000000;
 	private int memoryInUse;
@@ -44,7 +41,6 @@ public class Memory implements Serializable{
     }
 
     public byte[] get(int fileId) {
-        /*return data.get(fileId);*/
     	byte[] buf = null;
 		File file = new File(this.path + String.valueOf(fileId));
 		if(file.exists() == false)
@@ -60,7 +56,6 @@ public class Memory implements Serializable{
     }
 
     public boolean put(int chunkId, byte[] data) {
-    	/*data.put(fileId, chunk);*/
     	try (FileOutputStream fileOuputStream = new FileOutputStream(this.path + String.valueOf(chunkId))) {
     		fileOuputStream.write(data);
     	}catch (IOException e) {
@@ -68,10 +63,7 @@ public class Memory implements Serializable{
             return false;
         }
     	memoryInUse += data.length;
-		//this.chunksStored.add(new Pair<>(chunkId,data.length));
     	this.chunksStored.put(chunkId,data.length);
-		//Pair<Integer,Integer> cSize = new Pair<Integer, Integer>(chunkId, data.length);
-		//this.chunkSize.add(cSize);
 		return true;
     }
 
@@ -79,9 +71,6 @@ public class Memory implements Serializable{
         Returns data on success, null on error
     */
     public byte[] remove(int chunkId) {
-        /*if (data.get(fileId) == null)
-            return null;
-        return data.remove(fileId);*/
     	this.removeRedirectedChunk(chunkId);
     	File file = new File(this.path + String.valueOf(chunkId));
     	byte[] d = this.get(chunkId);
@@ -91,12 +80,6 @@ public class Memory implements Serializable{
     	}
     	System.out.println("Deleting file : " + this.path + String.valueOf(chunkId));
     	file.delete();
-    	/*for(int i = 0; i < this.chunksStored.size();i++) {
-    		if(this.chunksStored.get(i).getKey() == chunkId) {
-    			this.chunksStored.remove(i);
-    			break;
-    		}
-		}*/
     	this.chunksStored.remove(chunkId);
 
     	memoryInUse-=d.length;
@@ -111,18 +94,9 @@ public class Memory implements Serializable{
     	this.chunksRedirected.put(key, replication);
     }
     public boolean chunkRedirected(int key) {
-    	/*for(int i = 0; i < this.chunksRedirected.size();i++)
-    		if(this.chunksRedirected.get(i) == key)
-    			return true;
-    	return false;*/
     	return this.chunksRedirected.get(key) != null;
     }
     public void removeRedirectedChunk(int key) {
-    	/*for(int i = 0; i < this.chunksRedirected.size();i++)
-    		if(this.chunksRedirected.get(i) == key) {
-    			this.chunksRedirected.remove(i);
-    			return;
-    		}*/
     	this.chunksRedirected.remove(key);
     }
     
@@ -137,10 +111,7 @@ public class Memory implements Serializable{
     public FileData getFileChunks(String file_id) {
     	return this.backupFiles.get(file_id);
     }
-    
-    /*public List<Pair<Integer,Integer>> getStoredChunks(){
-    	return this.chunksStored;
-	}*/
+
     public Set<Entry<Integer,Integer>> getStoredChunks(){
     	return this.chunksStored.entrySet();
     }
@@ -152,18 +123,8 @@ public class Memory implements Serializable{
 	public void setMaxMemory(int space) {
     	this.maxMemory = space;
     }
-
-	/*public List<Pair<Integer,Integer>> getChunkSizeList() {
-		return this.chunkSize;
-	} */
 	
 	public boolean isStoredHere(int key) {
-		/*for(int i = 0; i < this.chunksStored.size();i++) {
-    		Pair<Integer,Integer> p = this.chunksStored.get(i);
-    		if(p.getKey() == key)
-    			return true;
-    	}
-		return false;*/
 		return this.chunksStored.get(key) != null;
 	}
 	

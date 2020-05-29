@@ -117,11 +117,6 @@ public class ChordMessageHandler implements Runnable {
 					if (this.chord.getMemory().chunkRedirected(message.key))
 						toSend = this.chord.getFromSuccessor(message.key, message.replication);
 				}
-				/*if (!this.chord.getMemory().chunkRedirected(message.key))
-					toSend = this.chord.getInMemory(message.key);
-				else
-					toSend = this.chord.getFromSuccessor(message.key, message.replication);*/
-
 				if (toSend == null) {
 					toSend = "ERROR".getBytes();
 				}
@@ -141,8 +136,6 @@ public class ChordMessageHandler implements Runnable {
 						this.chord.removeFromSuccessor(message.key,message.replication - 1);
 				}
 
-				/*if (toSend == null)
-					toSend = "ERROR".getBytes();*/
 				toSend = null;
 				break;
 			}
@@ -180,7 +173,6 @@ public class ChordMessageHandler implements Runnable {
 		} catch (IOException e) {
 			System.err.println("Error reading message.");
 			e.printStackTrace();
-			//return null;
 		}
 		if(debug) System.out.println("done reading from socket :" + new String(buf));
 		return new ChordMessage(buf);

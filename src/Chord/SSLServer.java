@@ -46,22 +46,7 @@ public class SSLServer {
         return this.serverSocket.isClosed();
     }
 
-    private SSLServerSocket createServerSocket() throws Exception {
-        /*SSLContext context;
-        KeyManagerFactory keyManagerFactory;
-        KeyStore keyStore;
-        char[] passphrase = "passphrase".toCharArray();
-
-        context = SSLContext.getInstance("TLS");
-        keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-        keyStore = KeyStore.getInstance("JKS");
-
-        keyStore.load(new FileInputStream("testkeys.jks"), passphrase);
-        keyManagerFactory.init(keyStore, passphrase);
-        context.init(keyManagerFactory.getKeyManagers(), null, null);
-
-        ServerSocketFactory serverSocketFactory = context.getServerSocketFactory();*/
-    	
+    private SSLServerSocket createServerSocket() throws Exception { 	
     	SSLContext context;
     	context = SSLContext.getInstance("SSL");
     	
