@@ -15,7 +15,6 @@ public class ChordMessage {
     public int oldKey;
     public String ip;
     public int port;
-    public int index;
     public int replication;
     
     private boolean debug = false;
@@ -63,11 +62,6 @@ public class ChordMessage {
         if (parts.length > 3) {
             this.port = Integer.parseInt(parts[3].replaceAll("\\D", ""));
             System.out.print(" "+this.port);
-        }
-        
-        if (parts.length > 4) {
-            this.index = Integer.parseInt(parts[4]);
-            System.out.print(" "+this.index);
         }
         System.out.println("");
     }

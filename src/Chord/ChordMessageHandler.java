@@ -82,7 +82,7 @@ public class ChordMessageHandler implements Runnable {
 					if (message.replication > 1)
 						this.chord.putInSuccessor(message.key, message.oldKey, message.body,message.replication - 1);
 				} else {
-					if(this.chord.getMemory().canStoreChunk(message.body.length) == false)
+					if(!this.chord.getMemory().canStoreChunk(message.body.length))
 						System.out.println("No space for chunk, redirecting");
 					if(this.chord.getMemory().isStoredHere(message.key))
 						System.out.println("Chunk already stored, redirecting");
