@@ -17,7 +17,7 @@ public class ChordStabilizer implements Runnable {
 		
 		this.chord.stabilize();
 		this.chord.fix_fingers();
-		this.chord.fix_sucessor();
+		this.chord.fix_successor();
 		
 		this.chord.printKnowns();
 		

@@ -28,7 +28,7 @@ public class Chord {
 	private ChordServer chordServer;
 	
 	private final ConcurrentHashMap<Integer,InetSocketAddress> fingerTable = new ConcurrentHashMap<>();
-	private final ConcurrentHashMap<Integer,InetSocketAddress> sucessorList = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Integer,InetSocketAddress> successorList = new ConcurrentHashMap<>();
 
 	int port;
 	private int key;
@@ -38,7 +38,7 @@ public class Chord {
     private Memory memory;
     
     int nextFinger = 0;
-    int nextSucessor = 0;
+    int nextSuccessor = 0;
 	
 	public Chord(Peer p , int port) {
 		this.selfAddress = new InetSocketAddress("localhost" , port);
@@ -104,7 +104,7 @@ public class Chord {
 		System.out.print("Connected!");
 		
 		this.updateFingerTable();
-		this.updateSucessors();
+		this.updateSuccessors();
 		
 		System.out.println("Asking data to successor initiated");
 		
@@ -215,7 +215,7 @@ public class Chord {
 				e.printStackTrace();
 			}
     		this.populateFingerTable(new_peer);
-    		this.updateSucessors();
+    		this.updateSuccessors();
 			return;
 		}
 		//se a chave que se procura estiver entre mim e o meu successor, logo deu hit!
@@ -362,7 +362,7 @@ public class Chord {
 	public void putInSuccessor(int key, int originKey, byte[] body, int replication) {
 		if(this.getSuccessor() == null)
 			return;
-		System.out.println("Sending to sucessor");
+		System.out.println("Sending to successor");
 		if(this.betweenOpenClose(this.key, this.hash(getSuccessor()), originKey)) { // If it has made a complete turn arrounf the ring
 			System.out.println("Could not sent, full turn -> " + this.key + " " + this.hash(getSuccessor()) + "  + originkey");
 			return;
@@ -537,47 +537,47 @@ public class Chord {
 		}
 	}
 	
-	public void updateSucessors() {
-		System.out.println("Going to update sucessors");
+	public void updateSuccessors() {
+		System.out.println("Going to update successors");
 		for(int i = 0; i < R; i++) {
 			int index;
 			if(i == 0)
 				index = this.key + 1;
 			else
-				index = this.positiveModule(this.hash(this.sucessorList.get(i-1)) + 1,(int)  Math.pow(2, M));
-			this.sucessorList.put(i, this.lookup(index));
+				index = this.positiveModule(this.hash(this.successorList.get(i-1)) + 1,(int)  Math.pow(2, M));
+			this.successorList.put(i, this.lookup(index));
 		}
 	}
 	
-	public void removeSucessor() {
-		System.out.println("Going to remove first sucessor");
+	public void removeSuccessor() {
+		System.out.println("Going to remove first successor");
 		for(int i = 0; i < R; i++) {
 			int index;
 			if(i == R-1) {
-				index = this.positiveModule(this.hash(this.sucessorList.get(i-1)) + 1,(int)  Math.pow(2, M));
+				index = this.positiveModule(this.hash(this.successorList.get(i-1)) + 1,(int)  Math.pow(2, M));
 				InetSocketAddress suc = this.lookup(index);
 				/*if(suc.toString().equals(this.selfAddress.toString()))
 					suc = null;*/
-				this.sucessorList.put(i, suc);
+				this.successorList.put(i, suc);
 			}else {
-				this.sucessorList.put(i, this.sucessorList.get(i+1));
+				this.successorList.put(i, this.successorList.get(i+1));
 			}
 		}
 	}
 	public void setSuccessor(InetSocketAddress suc) {
-		System.out.println("Going to set first sucessor");
+		System.out.println("Going to set first successor");
 		
 		for(int i = 1; i < R; i++) {
-			InetSocketAddress prev = this.sucessorList.get(i-1);
+			InetSocketAddress prev = this.successorList.get(i-1);
 			if(prev != null)
-				this.sucessorList.put(i, this.sucessorList.get(i-1));
+				this.successorList.put(i, this.successorList.get(i-1));
 		}
-		this.sucessorList.put(0,suc);
+		this.successorList.put(0,suc);
 		this.connected.set(true);
 	}
 	
 	public InetSocketAddress getSuccessor() {
-		InetSocketAddress suc = this.sucessorList.get(0);
+		InetSocketAddress suc = this.successorList.get(0);
 		if(suc != null && suc.toString().equals(this.selfAddress.toString()))
 			suc = null;
 		return suc;
@@ -591,16 +591,16 @@ public class Chord {
 		this.nextFinger++;
 	}
 	
-	public void fix_sucessor() {
-		if(this.nextSucessor == R)
-			this.nextSucessor = 0;
+	public void fix_successor() {
+		if(this.nextSuccessor == R)
+			this.nextSuccessor = 0;
 		int index;
-		if(this.nextSucessor == 0)
+		if(this.nextSuccessor == 0)
 			index = this.positiveModule((int) (this.getKey() + 1), (int)  Math.pow(2, M));
 		else
-			index = this.positiveModule((int) (this.hash(this.sucessorList.get(this.nextSucessor - 1)) + 1), (int)  Math.pow(2, M));
-		this.sucessorList.put(this.nextSucessor, this.lookup(index));
-		this.nextSucessor++;
+			index = this.positiveModule((int) (this.hash(this.successorList.get(this.nextSuccessor - 1)) + 1), (int)  Math.pow(2, M));
+		this.successorList.put(this.nextSuccessor, this.lookup(index));
+		this.nextSuccessor++;
 	}
 	
 	/*public void setSuccessor(InetSocketAddress suc) {
@@ -802,13 +802,13 @@ public class Chord {
 				m.close();
 				sent = true;
 			} catch (ConnectException e) {
-				System.out.println("Sucessor not available, trying anotherone");
-				this.removeSucessor();
+				System.out.println("Successor not available, trying anotherone");
+				this.removeSuccessor();
 				suc = this.getSuccessor();
 			}
 		}
 		if(suc == null) {
-			System.out.println("No known sucessor available");
+			System.out.println("No known successor available");
 			return;
 		}
 	}
@@ -830,13 +830,13 @@ public class Chord {
 				m.close();
 				sent = true;
 			} catch (ConnectException e) {
-				System.out.println("Sucessor not available, trying anotherone");
-				this.removeSucessor();
+				System.out.println("Successor not available, trying anotherone");
+				this.removeSuccessor();
 				suc = this.getSuccessor();
 			}
 		}
 		if(suc == null) {
-			System.out.println("No known sucessor available");
+			System.out.println("No known successor available");
 			return null;
 		}
 		return d;
@@ -852,13 +852,13 @@ public class Chord {
 				m.close();
 				sent = true;
 			} catch (ConnectException e) {
-				System.out.println("Sucessor not available, trying anotherone");
-				this.removeSucessor();
+				System.out.println("Successor not available, trying anotherone");
+				this.removeSuccessor();
 				suc = this.getSuccessor();
 			}
 		}
 		if(suc == null) {
-			System.out.println("No known sucessor available");
+			System.out.println("No known successor available");
 			return;
 		}
 	}
@@ -873,13 +873,13 @@ public class Chord {
 				m.close();
 				sent = true;
 			} catch (ConnectException e) {
-				System.out.println("Sucessor not available, trying anotherone");
-				this.removeSucessor();
+				System.out.println("Successor not available, trying anotherone");
+				this.removeSuccessor();
 				suc = this.getSuccessor();
 			}
 		}
 		if(suc == null) {
-			System.out.println("No known sucessor available");
+			System.out.println("No known successor available");
 			return;
 		}
 	}

@@ -133,7 +133,7 @@ public class ChordMessageHandler implements Runnable {
 					if (message.replication > 1)
 						this.chord.removeFromSuccessor(message.key,message.replication - 1);
 				} else {
-					System.out.println("Chunk redirected, removing here if exists and from sucessor");
+					System.out.println("Chunk redirected, removing here if exists and from successor");
 					toSend = this.chord.removeInMemory(message.key);
 					if(toSend == null)
 						this.chord.removeFromSuccessor(message.key,message.replication);

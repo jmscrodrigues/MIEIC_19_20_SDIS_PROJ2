@@ -28,7 +28,7 @@ public class Memory implements Serializable{
 	private final ConcurrentHashMap<Integer,Integer> chunksStored = new ConcurrentHashMap<>();
 	
 	/*
-	 * Chunks not able to store here and sent to sucessor 
+	 * Chunks not able to store here and sent to successor 
 	 */
 	private final ConcurrentHashMap<Integer,Integer> chunksRedirected = new ConcurrentHashMap<>();
 
