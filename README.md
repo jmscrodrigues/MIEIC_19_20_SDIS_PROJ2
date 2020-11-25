@@ -1,3 +1,5 @@
+Grade: 17/20
+
 ### All of these commands should be run in the src folder
 
 **In order to compile the program, you should run the following command:**
